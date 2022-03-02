@@ -1,0 +1,41 @@
+body {
+  margin: 0;
+}
+.background {
+  background-color: #cccccc;
+}
+main {
+  background-color: #ffffff;
+  padding: 8px;
+  box-sizing: border-box;
+}
+@media (max-width: 1079px) {
+  main {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+}
+@media (min-width: 1080px) {
+  main {
+    max-width: none;
+    margin: 0 40px;
+  }
+}
+header, footer {
+  background-color: #333333;
+  color: #ffffff;
+  padding: 16px;
+  text-align: center;
+}
+header a, footer a {
+  color: #ffffff;
+}
+.header_icon {
+  text-align: left;
+}
+.counter {
+  text-align: right;
+}
+.url {
+  font-size: 80%;
+}
