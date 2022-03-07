@@ -22,10 +22,10 @@ function putCounter() {
     if (counterDiv) {
         if (localStorage && localStorage.getItem('username') && typeof localStorage.getItem('username') === 'string') {
             const usernameString = localStorage.getItem('username');
-            counterDiv.insertAdjacentHTML('afterbegin', '<img src="https://yu-64b.infinityfreeapp.com/?parameter=0&username=' + usernameString + '">');
+            counterDiv.insertAdjacentHTML('afterbegin', '<img src="https://yu-64b.infinityfreeapp.com/?parameter=0&username=' + usernameString + '" alt="カウンター" crossorigin="anonymous">');
         }
         else {
-            counterDiv.insertAdjacentHTML('afterbegin', '<img src="https://yu-64b.infinityfreeapp.com/?paramerter=0">');
+            counterDiv.insertAdjacentHTML('afterbegin', '<img src="https://yu-64b.infinityfreeapp.com/?paramerter=0" alt="カウンター" crossorigin="anonymous">');
         }
     }
 }
