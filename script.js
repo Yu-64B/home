@@ -9,12 +9,12 @@ function setup() {
 }
 function putUrls() {
     const githubUrlDiv = Array.from(document.getElementsByTagName('div')).find(element => element.id === 'github_pages_url');
-    const proFreeHostUrlDiv = Array.from(document.getElementsByTagName('div')).find(element => element.id === 'profreehost_url');
+    const webhostUrlDiv = Array.from(document.getElementsByTagName('div')).find(element => element.id === 'webhost_url');
     if (githubUrlDiv) {
         githubUrlDiv.insertAdjacentHTML('afterbegin', '<a target="_blank" rel="noopener noreferrer" href="https://docs.github.com/en/pages">Powered by GitHub Pages</a>');
     }
-    if (proFreeHostUrlDiv) {
-        proFreeHostUrlDiv.insertAdjacentHTML('afterbegin', '<a target="_blank" rel="noopener noreferrer" href="https://profreehost.com/">Powered by ProFreeHost</a>');
+    if (webhostUrlDiv) {
+        webhostUrlDiv.insertAdjacentHTML('afterbegin', '<a target="_blank" rel="noopener noreferrer" href="https://www.000webhost.com">Powered by 000webhost</a>');
     }
 }
 function putCounter() {
@@ -22,10 +22,10 @@ function putCounter() {
     if (counterDiv) {
         if (localStorage && localStorage.getItem('username') && typeof localStorage.getItem('username') === 'string') {
             const usernameString = localStorage.getItem('username');
-            counterDiv.insertAdjacentHTML('afterbegin', '<img src="https://yu-64b.liveblog365.com/?parameter=0&username=' + usernameString + '" alt="カウンター" crossorigin="anonymous">');
+            counterDiv.insertAdjacentHTML('afterbegin', '<img src="https://yu-64b.000webhostapp.com//?parameter=0&username=' + usernameString + '" alt="カウンター" crossorigin="anonymous">');
         }
         else {
-            counterDiv.insertAdjacentHTML('afterbegin', '<img src="https://yu-64b.liveblog365.com/?paramerter=0" alt="カウンター" crossorigin="anonymous">');
+            counterDiv.insertAdjacentHTML('afterbegin', '<img src="https://yu-64b.000webhostapp.com//?paramerter=0" alt="カウンター" crossorigin="anonymous">');
         }
     }
 }
