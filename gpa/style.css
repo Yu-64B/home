@@ -1,0 +1,23 @@
+table {
+  border-collapse: collapse;
+}
+label {
+  height: 100%;
+}
+label:focus-within {
+  outline: solid;
+}
+input[type=text] {
+  border: none;
+  outline: none;
+}
+input[type=number] {
+  border: none;
+  outline: none;
+}
+.large {
+  width: 162.5px;
+}
+.small {
+  width: 48.75px;
+}
