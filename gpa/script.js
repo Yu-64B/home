@@ -82,6 +82,7 @@ function createObjectAndTable(doc) {
             const tableCellElement = document.createElement('td');
             const labelElement = document.createElement('label');
             const textInputElement = document.createElement('input');
+            labelElement.classList.add('outline');
             labelElement.appendChild(textInputElement);
             tableCellElement.appendChild(labelElement);
             tableRowElement.appendChild(tableCellElement);
@@ -124,20 +125,28 @@ function createObjectAndTable(doc) {
         // create table
         for (let i = 0; i < additionalHeadTexts.length; i++) {
             const tableCellElement = document.createElement('td');
-            const labelElement = document.createElement('label');
-            const textInputElement = document.createElement('input');
             if (i === 0 || i === 1) {
+                const labelElement = document.createElement('label');
+                const textInputElement = document.createElement('input');
+                labelElement.classList.add('outline');
                 textInputElement.type = 'number';
                 textInputElement.classList.add('small');
+                labelElement.appendChild(textInputElement);
+                tableCellElement.appendChild(labelElement);
             }
             else if (i === 2) {
+                const labelElement = document.createElement('label');
+                const textInputElement = document.createElement('input');
                 textInputElement.type = 'checkbox';
+                textInputElement.checked = true;
+                labelElement.appendChild(textInputElement);
+                tableCellElement.appendChild(labelElement);
             }
             else {
+                const textInputElement = document.createElement('input');
                 textInputElement.type = 'button';
+                tableCellElement.appendChild(textInputElement);
             }
-            labelElement.appendChild(textInputElement);
-            tableCellElement.appendChild(labelElement);
             tableRowElement.appendChild(tableCellElement);
         }
         // create object
