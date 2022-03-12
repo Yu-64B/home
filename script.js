@@ -31,7 +31,7 @@ function putCounter() {
     counterDiv.appendChild(counterTextDiv);
     if (localStorage && localStorage.getItem('username') && typeof localStorage.getItem('username') === 'string') {
         const usernameString = localStorage.getItem('username');
-        counterDiv.insertAdjacentHTML('beforeend', '<div><img src="https://yu-64b.000webhostapp.com?parameter=0&username=' + usernameString + '" alt="カウンター" crossorigin="anonymous"></div>');
+        counterDiv.insertAdjacentHTML('beforeend', '<div><img src="https://yu-64b.000webhostapp.com?username=' + usernameString + '&parameter=0" alt="カウンター" crossorigin="anonymous"></div>');
     }
     else {
         counterDiv.insertAdjacentHTML('beforeend', '<div><img src="https://yu-64b.000webhostapp.com?paramerter=0" alt="カウンター" crossorigin="anonymous"></div>');
