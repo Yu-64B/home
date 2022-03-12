@@ -5,18 +5,20 @@ body {
   background-color: #cccccc;
 }
 main {
-  background-color: #ffffff;
   padding: 8px;
+}
+.main_outer {
+  background-color: #ffffff;
   box-sizing: border-box;
 }
 @media (max-width: 1079px) {
-  main {
+  .main_outer {
     max-width: 1000px;
     margin: 0 auto;
   }
 }
 @media (min-width: 1080px) {
-  main {
+  .main_outer {
     max-width: none;
     margin: 0 40px;
   }
@@ -30,11 +32,14 @@ header, footer {
 header a, footer a {
   color: #ffffff;
 }
-.header_icon {
-  text-align: left;
+header {
+  display: flex;
+  align-items: center;
 }
-.counter {
-  text-align: right;
+.header_icon {
+  display: flex;
+  align-items: center;
+  margin-right: auto;
 }
 .url {
   font-size: 80%;
