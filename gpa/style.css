@@ -4,13 +4,15 @@ table {
 .outline:focus-within {
   outline: solid;
 }
-input[type=text] {
+table input {
+  vertical-align: middle;
+}
+table input[type=text], table input[type=number] {
   border: none;
   outline: none;
 }
-input[type=number] {
-  border: none;
-  outline: none;
+table input[type=button] {
+  font-size: 80%;
 }
 .large {
   width: 162.5px;
