@@ -34,7 +34,7 @@ function putCounter() {
         counterDiv.insertAdjacentHTML('beforeend', '<div><img src="https://yu-64b.000webhostapp.com?username=' + usernameString + '&parameter=0" alt="カウンター" crossorigin="anonymous"></div>');
     }
     else {
-        counterDiv.insertAdjacentHTML('beforeend', '<div><img src="https://yu-64b.000webhostapp.com?paramerter=0" alt="カウンター" crossorigin="anonymous"></div>');
+        counterDiv.insertAdjacentHTML('beforeend', '<div><img src="https://yu-64b.000webhostapp.com?parameter=0" alt="カウンター" crossorigin="anonymous"></div>');
     }
     counterDiv.insertAdjacentHTML('beforeend', '<div class="url"><a target="_blank" rel="noopener noreferrer" href="https://www.000webhost.com">Powered by 000webhost</a></div>');
 }
