@@ -23,7 +23,8 @@ function createHeader() {
     const header = document.createElement('header');
     const iconDiv = document.createElement('div');
     const iconImg = document.createElement('img');
-    iconDiv.classList.add('header_icon');
+    header.classList.add('flex_center');
+    iconDiv.classList.add('flex_center', 'flex_item_left');
     iconImg.src = 'pack_icon.png';
     iconDiv.appendChild(iconImg);
     header.appendChild(iconDiv);
@@ -41,6 +42,7 @@ function createCounter() {
     const urlAnchor = document.createElement('a');
     const url = new URL('https://www.000webhost.com');
     const urlText = document.createTextNode('Powered by 000webhost');
+    imgDiv.classList.add('flex_center');
     imgUrl.searchParams.set('id', '0');
     if (localStorage && localStorage.getItem('username') && typeof localStorage.getItem('username') === 'string') {
         const usernameString = localStorage.getItem('username');
@@ -70,6 +72,7 @@ function createFooter() {
     const urlAnchor = document.createElement('a');
     const url = new URL('https://docs.github.com/en/pages');
     const urlText = document.createTextNode('Powered by GitHub Pages');
+    footer.classList.add('flex_center');
     urlDiv.classList.add('url');
     urlAnchor.target = '_blank';
     urlAnchor.rel = 'noopener noreferrer';

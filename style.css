@@ -4,9 +4,6 @@ body {
 .background {
   background-color: #cccccc;
 }
-main {
-  padding: 8px;
-}
 .main_outer {
   background-color: #ffffff;
   box-sizing: border-box;
@@ -23,24 +20,23 @@ main {
     margin: 0 40px;
   }
 }
+main {
+  padding: 8px;
+}
 header, footer {
   background-color: #333333;
   color: #ffffff;
   padding: 16px;
   text-align: center;
 }
-header a, footer a {
-  color: #ffffff;
-}
-header {
-  display: flex;
-  align-items: center;
-}
-.header_icon {
-  display: flex;
-  align-items: center;
-  margin-right: auto;
-}
 .url {
   font-size: 80%;
+  color: #ffffff;
+}
+.flex_center {
+  display: flex;
+  align-items: center;
+}
+.flex_item_left {
+  margin-right: auto;
 }
