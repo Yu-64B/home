@@ -42,7 +42,7 @@ function createCounter() {
     const url = new URL('https://www.000webhost.com');
     const urlText = document.createTextNode('Powered by 000webhost');
     imgUrl.searchParams.set('id', '0');
-    if (localStorage && localStorage.getItem('username') && localStorage.getItem('username') === 'string') {
+    if (localStorage && localStorage.getItem('username') && typeof localStorage.getItem('username') === 'string') {
         const usernameString = localStorage.getItem('username');
         if (usernameString) {
             imgUrl.searchParams.set('username', usernameString);
