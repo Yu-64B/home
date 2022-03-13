@@ -5,36 +5,77 @@ function setup() {
     if (url.hostname.toLowerCase() !== 'yu-64b.github.io') {
         return;
     }
-    const main = Array.from(document.getElementsByTagName('main')).find(element => element.id === 'main');
+    const main = document.getElementById('main');
     if (!main) {
         return;
     }
     const backgroundDiv = document.createElement('div');
     const mainDiv = document.createElement('div');
-    backgroundDiv.id = 'background';
     backgroundDiv.classList.add('background');
     mainDiv.classList.add('main_outer');
-    backgroundDiv.insertAdjacentHTML('afterbegin', '<header><div class="header_icon"><img src="pack_icon.png"></div><div id="counter_outer"></div></header>');
+    backgroundDiv.appendChild(createHeader());
     mainDiv.appendChild(main);
     backgroundDiv.appendChild(mainDiv);
-    backgroundDiv.insertAdjacentHTML('beforeend', '<footer><div class="url"><a target="_blank" rel="noopener noreferrer" href="https://docs.github.com/en/pages">Powered by GitHub Pages</a></div></footer>');
+    backgroundDiv.appendChild(createFooter());
     document.body.appendChild(backgroundDiv);
-    putCounter();
 }
-function putCounter() {
-    const counterDiv = Array.from(document.getElementsByTagName('div')).find(element => element.id === 'counter_outer');
-    if (!counterDiv) {
-        return;
-    }
-    const counterTextDiv = document.createElement('div');
-    counterTextDiv.textContent = '表示された回数';
-    counterDiv.appendChild(counterTextDiv);
-    if (localStorage && localStorage.getItem('username') && typeof localStorage.getItem('username') === 'string') {
+function createHeader() {
+    const header = document.createElement('header');
+    const iconDiv = document.createElement('div');
+    const iconImg = document.createElement('img');
+    iconDiv.classList.add('header_icon');
+    iconImg.src = 'pack_icon.png';
+    iconDiv.appendChild(iconImg);
+    header.appendChild(iconDiv);
+    header.appendChild(createCounter());
+    return header;
+}
+function createCounter() {
+    const counterDiv = document.createElement('div');
+    const textDiv = document.createElement('div');
+    const text = document.createTextNode('表示された回数');
+    const imgDiv = document.createElement('div');
+    const img = document.createElement('img');
+    const imgUrl = new URL('https://yu-64b.000webhostapp.com');
+    const urlDiv = document.createElement('div');
+    const urlAnchor = document.createElement('a');
+    const url = new URL('https://www.000webhost.com');
+    const urlText = document.createTextNode('Powered by 000webhost');
+    imgUrl.searchParams.set('id', '0');
+    if (localStorage && localStorage.getItem('username') && localStorage.getItem('username') === 'string') {
         const usernameString = localStorage.getItem('username');
-        counterDiv.insertAdjacentHTML('beforeend', '<div><img src="https://yu-64b.000webhostapp.com?username=' + usernameString + '&parameter=0" alt="カウンター" crossorigin="anonymous"></div>');
+        if (usernameString) {
+            imgUrl.searchParams.set('username', usernameString);
+        }
     }
-    else {
-        counterDiv.insertAdjacentHTML('beforeend', '<div><img src="https://yu-64b.000webhostapp.com?parameter=0" alt="カウンター" crossorigin="anonymous"></div>');
-    }
-    counterDiv.insertAdjacentHTML('beforeend', '<div class="url"><a target="_blank" rel="noopener noreferrer" href="https://www.000webhost.com">Powered by 000webhost</a></div>');
+    img.src = imgUrl.href;
+    img.alt = 'カウンター';
+    img.crossOrigin = 'anonymous';
+    urlDiv.classList.add('url');
+    urlAnchor.target = '_blank';
+    urlAnchor.rel = 'noopener noreferrer';
+    urlAnchor.href = url.href;
+    textDiv.appendChild(text);
+    counterDiv.appendChild(textDiv);
+    imgDiv.appendChild(img);
+    counterDiv.appendChild(imgDiv);
+    urlAnchor.appendChild(urlText);
+    urlDiv.appendChild(urlAnchor);
+    counterDiv.appendChild(urlDiv);
+    return counterDiv;
+}
+function createFooter() {
+    const footer = document.createElement('footer');
+    const urlDiv = document.createElement('div');
+    const urlAnchor = document.createElement('a');
+    const url = new URL('https://docs.github.com/en/pages');
+    const urlText = document.createTextNode('Powered by GitHub Pages');
+    urlDiv.classList.add('url');
+    urlAnchor.target = '_blank';
+    urlAnchor.rel = 'noopener noreferrer';
+    urlAnchor.href = url.href;
+    urlAnchor.appendChild(urlText);
+    urlDiv.appendChild(urlAnchor);
+    footer.appendChild(urlDiv);
+    return footer;
 }
