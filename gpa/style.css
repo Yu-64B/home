@@ -1,6 +1,9 @@
 table {
   border-collapse: collapse;
 }
+table td {
+  text-align: center;
+}
 .outline:focus-within {
   outline: solid;
 }
@@ -19,4 +22,5 @@ table input[type=button] {
 }
 .small {
   width: 48.75px;
+  text-align: center;
 }

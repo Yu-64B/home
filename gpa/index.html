@@ -13,14 +13,14 @@
       <h2>ファイル読み込み</h2>
       <p>成績のページを保存し、ダウンロードしたHTMLファイルを入力してください。</p>
       <p>
-        <input type="file" id="input" accept=".html">
+        <input type="file" id="file_input" accept=".html">
       </p>
     </section>
     <section>
       <h2>計算</h2>
       <p>選択した科目のGPAを計算する。</p>
       <p>
-        <input type="button" id="button" value="計算する">
+        <input type="button" id="calc_button_input" value="計算する">
       </p>
     </section>
     <section>
@@ -31,9 +31,13 @@
     </section>
     <section>
       <h2>表</h2>
-      <table id="table" border="1">
-        <thead></thead>
-        <tbody></tbody>
+      <p>行を追加する。</p>
+      <p>
+        <input type="button" id="add_button_input" value="行の追加">
+      </p>
+      <table border="1">
+        <thead id="table_head"></thead>
+        <tbody id="table_body"></tbody>
       </table>
     </section>
   </main>
