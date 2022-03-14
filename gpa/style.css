@@ -1,7 +1,8 @@
 table {
   border-collapse: collapse;
 }
-table td {
+table th, td {
+  border: 1px solid;
   text-align: center;
 }
 .outline:focus-within {

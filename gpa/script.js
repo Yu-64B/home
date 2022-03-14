@@ -26,11 +26,12 @@ function handleFile(event) {
     if (!(event instanceof Event) || !(event.currentTarget instanceof HTMLInputElement) || !event.currentTarget.files)
         return;
     const file = event.currentTarget.files[0];
-    if (!file || file.type !== 'text/html')
+    if ((file === null || file === void 0 ? void 0 : file.type) !== 'text/html')
         return;
     const reader = new FileReader();
     reader.onload = (event) => {
-        if (!event.target || typeof event.target.result !== 'string')
+        var _a;
+        if (typeof ((_a = event.target) === null || _a === void 0 ? void 0 : _a.result) !== 'string')
             return;
         const htmlText = event.target.result;
         const parser = new DOMParser();
@@ -106,8 +107,9 @@ function createHeadRow(texts) {
     const rowElement = document.createElement('tr');
     for (let i = 0; i < headTexts.concat(additionalHeadTexts).length; i++) {
         const cellElement = document.createElement('th');
-        if (texts[i]) {
-            const textNode = document.createTextNode(texts[i]);
+        const text = texts[i];
+        if (text) {
+            const textNode = document.createTextNode(text);
             cellElement.appendChild(textNode);
         }
         else {
@@ -137,8 +139,9 @@ function createBodyRow(texts) {
             textInputElement.type = 'text';
             textInputElement.classList.add('large');
         }
-        if (texts[i]) {
-            textInputElement.value = texts[i];
+        const text = texts[i];
+        if (text) {
+            textInputElement.value = text;
         }
         labelElement.appendChild(textInputElement);
         cellElement.appendChild(labelElement);
@@ -169,6 +172,23 @@ function createBodyRow(texts) {
     return rowElement;
 }
 function calculateGP() {
+    var _a;
+    if (!(talbeBodyElement instanceof HTMLTableSectionElement))
+        return;
+    for (const rowElement of talbeBodyElement.rows) {
+        const cellElements = rowElement.cells;
+        const selectCellElement = cellElements[headTexts.length + 2];
+        if (!(((_a = selectCellElement === null || selectCellElement === void 0 ? void 0 : selectCellElement.firstChild) === null || _a === void 0 ? void 0 : _a.firstChild) instanceof HTMLInputElement))
+            return;
+        const checkboxInputElement = selectCellElement.firstChild.firstChild;
+        if (checkboxInputElement.checked)
+            continue;
+        const creditCellElement = cellElements[1];
+        const evaluationCellElement = cellElements[2];
+        const scoreCellElement = cellElements[3];
+        const GPCellElement = cellElements[headTexts.length];
+        const GPxCreditCellElement = cellElements[headTexts.length + 1];
+    }
 }
 function calculateGPA() {
 }
