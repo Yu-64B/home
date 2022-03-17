@@ -26,12 +26,13 @@ function createHeader() {
     const iconAnchor = document.createElement('a');
     const iconUrl = new URL('https://yu-64b.github.io/home');
     const iconImg = document.createElement('img');
+    const iconImgUrl = new URL('https://yu-64b.github.io/home/pack_icon.png');
     const headerEndDiv = document.createElement('div');
     header.classList.add('header-footer-flex-container', 'header-footer-wrap-container', 'header-footer-large-gap-container');
     headerStartDiv.classList.add('header-start-item');
     iconAnchor.classList.add('header-footer-flex-container');
     iconAnchor.href = iconUrl.href;
-    iconImg.src = 'pack_icon.png';
+    iconImg.src = iconImgUrl.href;
     headerEndDiv.classList.add('header-end-item');
     iconAnchor.appendChild(iconImg);
     iconDiv.appendChild(iconAnchor);
