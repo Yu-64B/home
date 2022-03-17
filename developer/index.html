@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="icon" href="../favicon.ico">
+</head>
+<body>
+  <main id="main">
+    <section>
+      <h1>Developer Tools</h1>
+      <p>
+        <input type="text" onchange="handleChange(this.value)">
+      </p>
+    </section>
+  </main>
+  <script type="text/javascript" src="../script.js"></script>
+  <script>
+    'use strict';
+    function handleChange(text) {
+      localStorage.setItem('username', text);
+    }
+  </script>
+</body>
+</html>
