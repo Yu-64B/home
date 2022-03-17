@@ -1,26 +1,29 @@
 'use strict';
 const headTexts = ['科目名', '単位', '評価', '素点', '年度', '学期', '教員氏名'];
 const additionalHeadTexts = ['GP', '単位数×GP', '選択', '削除'];
-const fileInputElement = document.getElementById('file_input');
-const tableHeadElement = document.getElementById('table_head');
-const talbeBodyElement = document.getElementById('table_body');
-const calcGPButtonInputElement = document.getElementById('calc_gp_button_input');
-const calcGPAButtonInputElement = document.getElementById('calc_gpa_button_input');
-const addButtonInputElement = document.getElementById('add_button_input');
-if (fileInputElement instanceof HTMLInputElement) {
-    fileInputElement.addEventListener('change', handleFile);
-}
-if (calcGPButtonInputElement instanceof HTMLInputElement) {
-    calcGPButtonInputElement.addEventListener('click', calculateGP);
-}
-if (calcGPAButtonInputElement instanceof HTMLInputElement) {
-    calcGPAButtonInputElement.addEventListener('click', calculateGPA);
-}
-if (addButtonInputElement instanceof HTMLInputElement) {
-    addButtonInputElement.addEventListener('click', addRow);
-}
-if (tableHeadElement instanceof HTMLTableSectionElement) {
-    tableHeadElement.appendChild(createHeadRow(headTexts.concat(additionalHeadTexts)));
+const tableHeadElement = document.getElementById('table-head');
+const talbeBodyElement = document.getElementById('table-body');
+setupGPA();
+function setupGPA() {
+    const fileInputElement = document.getElementById('file-input');
+    const calcGPButtonInputElement = document.getElementById('calc-gp-button-input');
+    const calcGPAButtonInputElement = document.getElementById('calc-gpa-button-input');
+    const addButtonInputElement = document.getElementById('add-button-input');
+    if (fileInputElement instanceof HTMLInputElement) {
+        fileInputElement.addEventListener('change', handleFile);
+    }
+    if (calcGPButtonInputElement instanceof HTMLInputElement) {
+        calcGPButtonInputElement.addEventListener('click', calculateGP);
+    }
+    if (calcGPAButtonInputElement instanceof HTMLInputElement) {
+        calcGPAButtonInputElement.addEventListener('click', calculateGPA);
+    }
+    if (addButtonInputElement instanceof HTMLInputElement) {
+        addButtonInputElement.addEventListener('click', addRow);
+    }
+    if (tableHeadElement instanceof HTMLTableSectionElement) {
+        tableHeadElement.appendChild(createHeadRow(headTexts.concat(additionalHeadTexts)));
+    }
 }
 function handleFile(event) {
     if (!(event instanceof Event) || !(event.currentTarget instanceof HTMLInputElement) || !event.currentTarget.files) {
