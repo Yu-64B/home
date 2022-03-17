@@ -12,7 +12,7 @@ function setup() {
     const backgroundDiv = document.createElement('div');
     const mainDiv = document.createElement('div');
     backgroundDiv.classList.add('background');
-    mainDiv.classList.add('main_outer');
+    mainDiv.classList.add('main-outer');
     backgroundDiv.appendChild(createHeader());
     mainDiv.appendChild(main);
     backgroundDiv.appendChild(mainDiv);
@@ -21,18 +21,29 @@ function setup() {
 }
 function createHeader() {
     const header = document.createElement('header');
+    const headerStartDiv = document.createElement('div');
     const iconDiv = document.createElement('div');
+    const iconAnchor = document.createElement('a');
+    const iconUrl = new URL('https://yu-64b.github.io/home');
     const iconImg = document.createElement('img');
-    header.classList.add('flex_center');
-    iconDiv.classList.add('flex_center', 'flex_item_left');
+    const headerEndDiv = document.createElement('div');
+    header.classList.add('header-footer-flex-container', 'header-footer-wrap-container', 'header-footer-large-gap-container');
+    headerStartDiv.classList.add('header-start-item');
+    iconAnchor.classList.add('header-footer-flex-container');
+    iconAnchor.href = iconUrl.href;
     iconImg.src = 'pack_icon.png';
-    iconDiv.appendChild(iconImg);
-    header.appendChild(iconDiv);
-    header.appendChild(createCounter());
+    headerEndDiv.classList.add('header-end-item');
+    iconAnchor.appendChild(iconImg);
+    iconDiv.appendChild(iconAnchor);
+    headerStartDiv.appendChild(iconDiv);
+    header.appendChild(headerStartDiv);
+    headerEndDiv.appendChild(createCounter());
+    header.appendChild(headerEndDiv);
     return header;
 }
 function createCounter() {
     const counterDiv = document.createElement('div');
+    const counterInnerDiv = document.createElement('div');
     const textDiv = document.createElement('div');
     const text = document.createTextNode('表示された回数');
     const imgDiv = document.createElement('div');
@@ -42,7 +53,9 @@ function createCounter() {
     const urlAnchor = document.createElement('a');
     const url = new URL('https://www.000webhost.com');
     const urlText = document.createTextNode('Powered by 000webhost');
-    imgDiv.classList.add('flex_center');
+    counterDiv.classList.add('counter-item');
+    counterInnerDiv.classList.add('header-footer-flex-container', 'header-footer-wrap-container', 'header-footer-small-gap-container');
+    imgDiv.classList.add('header-footer-flex-container');
     imgUrl.searchParams.set('id', '0');
     if (localStorage && localStorage.getItem('username') && typeof localStorage.getItem('username') === 'string') {
         const usernameString = localStorage.getItem('username');
@@ -53,14 +66,15 @@ function createCounter() {
     img.src = imgUrl.href;
     img.alt = 'カウンター';
     img.crossOrigin = 'anonymous';
-    urlDiv.classList.add('url');
+    urlAnchor.classList.add('header-footer-link');
     urlAnchor.target = '_blank';
     urlAnchor.rel = 'noopener noreferrer';
     urlAnchor.href = url.href;
     textDiv.appendChild(text);
-    counterDiv.appendChild(textDiv);
+    counterInnerDiv.appendChild(textDiv);
     imgDiv.appendChild(img);
-    counterDiv.appendChild(imgDiv);
+    counterInnerDiv.appendChild(imgDiv);
+    counterDiv.appendChild(counterInnerDiv);
     urlAnchor.appendChild(urlText);
     urlDiv.appendChild(urlAnchor);
     counterDiv.appendChild(urlDiv);
@@ -72,8 +86,8 @@ function createFooter() {
     const urlAnchor = document.createElement('a');
     const url = new URL('https://docs.github.com/en/pages');
     const urlText = document.createTextNode('Powered by GitHub Pages');
-    footer.classList.add('flex_center');
-    urlDiv.classList.add('url');
+    footer.classList.add('header-footer-flex-container');
+    urlAnchor.classList.add('header-footer-link');
     urlAnchor.target = '_blank';
     urlAnchor.rel = 'noopener noreferrer';
     urlAnchor.href = url.href;
