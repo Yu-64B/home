@@ -14,6 +14,7 @@ table input {
 table input[type=text], table input[type=number] {
   border: none;
   outline: none;
+  background-color: transparent;
 }
 table input[type=button] {
   font-size: 80%;
@@ -24,4 +25,10 @@ table input[type=button] {
 .small {
   width: 48.75px;
   text-align: center;
+}
+.warning {
+  background-color: #ffffcc;
+}
+.error {
+  background-color: #ffcccc;
 }
