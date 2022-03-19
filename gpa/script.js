@@ -79,8 +79,8 @@ function createTable(doc) {
 function readRowTexts(rowElement) {
     const texts = [];
     for (const cellElement of rowElement.cells) {
-        if (cellElement.textContent) {
-            texts.push(cellElement.textContent.trim());
+        if (cellElement.innerText) {
+            texts.push(cellElement.innerText.trim());
         }
         else {
             texts.push('');
@@ -203,23 +203,22 @@ function calculateGPA() {
         const evaluationTextInputElement = evaluationCellElement.getElementsByTagName('input')[0];
         const scoreTextInputElement = scoreCellElement.getElementsByTagName('input')[0];
         const GPTextInputElement = GPCellElement.getElementsByTagName('input')[0];
-        const GPxCreditTextIntpueElement = GPxCreditCellElement.getElementsByTagName('input')[0];
+        const GPxCreditTextIntputElement = GPxCreditCellElement.getElementsByTagName('input')[0];
         const checkboxInputElement = selectCellElement.getElementsByTagName('input')[0];
-        if (!creditTextInputElement || !evaluationTextInputElement || !scoreTextInputElement || !GPTextInputElement || !GPxCreditTextIntpueElement || !checkboxInputElement) {
+        if (!creditTextInputElement || !evaluationTextInputElement || !scoreTextInputElement || !GPTextInputElement || !GPxCreditTextIntputElement || !checkboxInputElement) {
             return;
         }
         if (!checkboxInputElement.checked) {
             continue;
         }
         GPTextInputElement.value = '';
-        GPxCreditTextIntpueElement.value = '';
+        GPxCreditTextIntputElement.value = '';
         const inputCreditNumber = creditTextInputElement.value.trim() !== '' ? Number(creditTextInputElement.value.trim()) : NaN;
         if (!isNaN(inputCreditNumber)) {
             creditSumNumber += inputCreditNumber;
         }
         else {
             creditCellElement.classList.add('warning');
-            // GPxCreditCellElement.classList.add('warning');
         }
         const inputEvaluationText = evaluationTextInputElement.value.replace(/[\uFF01-\uFF5E]/g, text => String.fromCharCode(text.charCodeAt(0) - 0xFEE0)).toUpperCase().trim();
         const inputScoreNumber = scoreTextInputElement.value.trim() !== '' ? Number(scoreTextInputElement.value.trim()) : NaN;
@@ -228,46 +227,37 @@ function calculateGPA() {
             if (checkedEvaluationText && inputScoreNumber in scoreToEvaluationTexts) {
                 evaluationCellElement.classList.add('warning');
                 scoreCellElement.classList.add('warning');
-                // GPCellElement.classList.add('warning');
-                // GPxCreditCellElement.classList.add('warning');
             }
             else if (checkedEvaluationText) {
                 scoreCellElement.classList.add('warning');
-                // GPCellElement.classList.add('warning');
-                // GPxCreditCellElement.classList.add('warning');
             }
             else if (inputScoreNumber in scoreToEvaluationTexts) {
                 evaluationCellElement.classList.add('warning');
-                // GPCellElement.classList.add('warning');
-                // GPxCreditCellElement.classList.add('warning');
             }
             else {
                 evaluationCellElement.classList.add('error');
                 scoreCellElement.classList.add('error');
-                // GPCellElement.classList.add('error');
-                // GPxCreditCellElement.classList.remove('warning');
-                // GPxCreditCellElement.classList.add('error');
                 continue;
             }
         }
         const GPNumber = Math.min(Math.max((checkedEvaluationText ? scoreToEvaluationTexts.lastIndexOf(checkedEvaluationText) : inputScoreNumber) - 5, 0), 4);
         GPTextInputElement.value = GPNumber.toString();
         const GPxCreditNumber = isNaN(inputCreditNumber) ? 0 : inputCreditNumber * GPNumber;
-        GPxCreditTextIntpueElement.value = GPxCreditNumber.toString();
+        GPxCreditTextIntputElement.value = GPxCreditNumber.toString();
         GPxCreditSumNumber += GPxCreditNumber;
     }
     showGPA(GPxCreditSumNumber, creditSumNumber);
 }
 function showGPA(GPxCreditSumNumber, creditSumNumber) {
-    const GPxCreditSumTextIntpueElement = document.getElementById('credit-gp-sum-text-input');
-    const creditSumTextIntpueElement = document.getElementById('credit-sum-text-input');
+    const GPxCreditSumTextIntputElement = document.getElementById('credit-gp-sum-text-input');
+    const creditSumTextIntputElement = document.getElementById('credit-sum-text-input');
     const GPATextInputElement = document.getElementById('gpa-text-input');
-    if (!(GPxCreditSumTextIntpueElement instanceof HTMLInputElement) || !(creditSumTextIntpueElement instanceof HTMLInputElement) || !(GPATextInputElement instanceof HTMLInputElement)) {
+    if (!(GPxCreditSumTextIntputElement instanceof HTMLInputElement) || !(creditSumTextIntputElement instanceof HTMLInputElement) || !(GPATextInputElement instanceof HTMLInputElement)) {
         return;
     }
     const GPANumber = creditSumNumber !== 0 ? GPxCreditSumNumber / creditSumNumber : 0;
-    GPxCreditSumTextIntpueElement.value = GPxCreditSumNumber.toString();
-    creditSumTextIntpueElement.value = creditSumNumber.toString();
+    GPxCreditSumTextIntputElement.value = GPxCreditSumNumber.toString();
+    creditSumTextIntputElement.value = creditSumNumber.toString();
     GPATextInputElement.value = GPANumber.toString();
 }
 function resetCellsColor() {
