@@ -8,6 +8,7 @@ function setupGPA() {
     const fileInputElement = document.getElementById('file-input');
     const calcGPAButtonInputElement = document.getElementById('calc-gpa-button-input');
     const addButtonInputElement = document.getElementById('add-button-input');
+    const readTableButtonInputElement = document.getElementById('read-table-button-input');
     if (fileInputElement instanceof HTMLInputElement) {
         fileInputElement.addEventListener('change', handleFile);
     }
@@ -19,6 +20,9 @@ function setupGPA() {
     }
     if (tableHeadElement instanceof HTMLTableSectionElement) {
         tableHeadElement.appendChild(createHeadRow(headTexts.concat(additionalHeadTexts)));
+    }
+    if (readTableButtonInputElement instanceof HTMLInputElement) {
+        readTableButtonInputElement.addEventListener('click', readTableFromText);
     }
 }
 function handleFile(event) {
@@ -268,5 +272,50 @@ function resetCellsColor() {
     for (const cell of cells) {
         cell.classList.remove('warning');
         cell.classList.remove('error');
+    }
+}
+function readTableFromText() {
+    if (!(tableHeadElement instanceof HTMLTableSectionElement) || !(talbeBodyElement instanceof HTMLTableSectionElement)) {
+        return;
+    }
+    while (talbeBodyElement.lastChild) {
+        talbeBodyElement.removeChild(talbeBodyElement.lastChild);
+    }
+    const textareaElement = document.getElementById('textarea');
+    if (!(textareaElement instanceof HTMLTextAreaElement)) {
+        return;
+    }
+    const rowTexts = textareaElement.value.trim().split('\n\n').map(text => text.trim());
+    for (const [i, rowText] of rowTexts.entries()) {
+        const cellTexts = rowText.split(/[\n|\t]+/).map(text => text.trim());
+        if (cellTexts.length <= 1) {
+            continue;
+        }
+        if (i === 0 && cellTexts.every(text => text !== '' && isNaN(Number(text))) && cellTexts.length === (new Set(cellTexts)).size && cellTexts.length === rowText.split(/\t/).length) {
+            headTexts.length = 0;
+            while (tableHeadElement.lastChild) {
+                tableHeadElement.removeChild(tableHeadElement.lastChild);
+            }
+            for (const cellText of cellTexts) {
+                headTexts.push(cellText);
+            }
+            tableHeadElement.appendChild(createHeadRow(headTexts.concat(additionalHeadTexts)));
+        }
+        else {
+            if (cellTexts.length === headTexts.length) {
+                talbeBodyElement.appendChild(createBodyRow(cellTexts));
+            }
+            else if (cellTexts.length === headTexts.length - 1) {
+                cellTexts.splice(1, 0, '');
+                talbeBodyElement.appendChild(createBodyRow(cellTexts));
+            }
+            else {
+                const texts = [];
+                texts.length = headTexts.length;
+                texts[0] = cellTexts[0];
+                texts.fill('', 1);
+                talbeBodyElement.appendChild(createBodyRow(texts));
+            }
+        }
     }
 }
