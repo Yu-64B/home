@@ -6,14 +6,10 @@ const talbeBodyElement = document.getElementById('table-body');
 setupGPA();
 function setupGPA() {
     const fileInputElement = document.getElementById('file-input');
-    const calcGPButtonInputElement = document.getElementById('calc-gp-button-input');
     const calcGPAButtonInputElement = document.getElementById('calc-gpa-button-input');
     const addButtonInputElement = document.getElementById('add-button-input');
     if (fileInputElement instanceof HTMLInputElement) {
         fileInputElement.addEventListener('change', handleFile);
-    }
-    if (calcGPButtonInputElement instanceof HTMLInputElement) {
-        calcGPButtonInputElement.addEventListener('click', calculateGP);
     }
     if (calcGPAButtonInputElement instanceof HTMLInputElement) {
         calcGPAButtonInputElement.addEventListener('click', calculateGPA);
@@ -35,7 +31,7 @@ function handleFile(event) {
     }
     const reader = new FileReader();
     reader.onload = event => {
-        if (!(event.target instanceof FileReader) || typeof event.target.result !== 'string') {
+        if (!event.target || typeof event.target.result !== 'string') {
             return;
         }
         const htmlText = event.target.result;
@@ -64,7 +60,7 @@ function createTable(doc) {
     for (const [i, rowElement] of Array.from(gradeTableElement.rows).entries()) {
         const texts = readRowTexts(rowElement);
         if (i === 0) {
-            if (texts.some(text => text === '')) {
+            if (texts.some(text => text === '') || texts.length !== (new Set(texts)).size) {
                 return;
             }
             for (const text of texts) {
@@ -91,30 +87,6 @@ function readRowTexts(rowElement) {
         }
     }
     return texts;
-}
-function addRow() {
-    if (!(talbeBodyElement instanceof HTMLTableSectionElement)) {
-        return;
-    }
-    const texts = [];
-    texts.length = headTexts.length;
-    texts.fill('');
-    talbeBodyElement.appendChild(createBodyRow(texts));
-}
-function removeRow(event) {
-    if (!(event instanceof Event) || !(event.currentTarget instanceof HTMLInputElement)) {
-        return;
-    }
-    const removeButtonInputElement = event.currentTarget;
-    const rowElement = removeButtonInputElement.closest('tr');
-    if (!rowElement) {
-        return;
-    }
-    const talbeBodyElement = rowElement.parentElement;
-    if (!talbeBodyElement) {
-        return;
-    }
-    talbeBodyElement.removeChild(rowElement);
 }
 function createHeadRow(texts) {
     const rowElement = document.createElement('tr');
@@ -184,12 +156,38 @@ function createBodyRow(texts) {
     }
     return rowElement;
 }
-function calculateGP() {
-    const scoreToEvaluationTexts = ['D', 'D', 'D', 'D', 'D', 'D', 'C', 'B', 'A', 'AA', 'AA'];
-    resetCellsColor();
+function addRow() {
     if (!(talbeBodyElement instanceof HTMLTableSectionElement)) {
         return;
     }
+    const texts = [];
+    texts.length = headTexts.length;
+    texts.fill('');
+    talbeBodyElement.appendChild(createBodyRow(texts));
+}
+function removeRow(event) {
+    if (!(event instanceof Event) || !(event.currentTarget instanceof HTMLInputElement)) {
+        return;
+    }
+    const removeButtonInputElement = event.currentTarget;
+    const rowElement = removeButtonInputElement.closest('tr');
+    if (!rowElement) {
+        return;
+    }
+    const talbeBodyElement = rowElement.parentElement;
+    if (!(talbeBodyElement instanceof HTMLTableSectionElement)) {
+        return;
+    }
+    talbeBodyElement.removeChild(rowElement);
+}
+function calculateGPA() {
+    if (!(talbeBodyElement instanceof HTMLTableSectionElement)) {
+        return;
+    }
+    const scoreToEvaluationTexts = ['D', 'D', 'D', 'D', 'D', 'D', 'C', 'B', 'A', 'AA', 'AA'];
+    let GPxCreditSumNumber = 0;
+    let creditSumNumber = 0;
+    resetCellsColor();
     for (const rowElement of talbeBodyElement.rows) {
         const cellElements = rowElement.cells;
         const creditCellElement = cellElements[1];
@@ -215,37 +213,62 @@ function calculateGP() {
         }
         GPTextInputElement.value = '';
         GPxCreditTextIntpueElement.value = '';
-        const inputEvaluationText = evaluationTextInputElement.value.trim().replace(/[\uFF01-\uFF5E]/g, text => String.fromCharCode(text.charCodeAt(0) - 0xFEE0)).toUpperCase();
+        const inputCreditNumber = creditTextInputElement.value.trim() !== '' ? Number(creditTextInputElement.value.trim()) : NaN;
+        if (!isNaN(inputCreditNumber)) {
+            creditSumNumber += inputCreditNumber;
+        }
+        else {
+            creditCellElement.classList.add('warning');
+            // GPxCreditCellElement.classList.add('warning');
+        }
+        const inputEvaluationText = evaluationTextInputElement.value.replace(/[\uFF01-\uFF5E]/g, text => String.fromCharCode(text.charCodeAt(0) - 0xFEE0)).toUpperCase().trim();
         const inputScoreNumber = scoreTextInputElement.value.trim() !== '' ? Number(scoreTextInputElement.value.trim()) : NaN;
         const checkedEvaluationText = scoreToEvaluationTexts.find(evaluationText => inputEvaluationText === evaluationText);
         if (scoreToEvaluationTexts[inputScoreNumber] !== inputEvaluationText) {
             if (checkedEvaluationText && inputScoreNumber in scoreToEvaluationTexts) {
                 evaluationCellElement.classList.add('warning');
                 scoreCellElement.classList.add('warning');
+                // GPCellElement.classList.add('warning');
+                // GPxCreditCellElement.classList.add('warning');
             }
             else if (checkedEvaluationText) {
                 scoreCellElement.classList.add('warning');
+                // GPCellElement.classList.add('warning');
+                // GPxCreditCellElement.classList.add('warning');
             }
             else if (inputScoreNumber in scoreToEvaluationTexts) {
                 evaluationCellElement.classList.add('warning');
+                // GPCellElement.classList.add('warning');
+                // GPxCreditCellElement.classList.add('warning');
             }
             else {
                 evaluationCellElement.classList.add('error');
                 scoreCellElement.classList.add('error');
+                // GPCellElement.classList.add('error');
+                // GPxCreditCellElement.classList.remove('warning');
+                // GPxCreditCellElement.classList.add('error');
                 continue;
             }
         }
         const GPNumber = Math.min(Math.max((checkedEvaluationText ? scoreToEvaluationTexts.lastIndexOf(checkedEvaluationText) : inputScoreNumber) - 5, 0), 4);
         GPTextInputElement.value = GPNumber.toString();
-        const inputCreditNumber = creditTextInputElement.value.trim() !== '' ? Number(creditTextInputElement.value.trim()) : NaN;
-        if (isNaN(inputCreditNumber)) {
-            creditCellElement.classList.add('warning');
-        }
-        const GPxCreditNumber = GPNumber * (isNaN(inputCreditNumber) ? 0 : inputCreditNumber);
+        const GPxCreditNumber = isNaN(inputCreditNumber) ? 0 : inputCreditNumber * GPNumber;
         GPxCreditTextIntpueElement.value = GPxCreditNumber.toString();
+        GPxCreditSumNumber += GPxCreditNumber;
     }
+    showGPA(GPxCreditSumNumber, creditSumNumber);
 }
-function calculateGPA() {
+function showGPA(GPxCreditSumNumber, creditSumNumber) {
+    const GPxCreditSumTextIntpueElement = document.getElementById('credit-gp-sum-text-input');
+    const creditSumTextIntpueElement = document.getElementById('credit-sum-text-input');
+    const GPATextInputElement = document.getElementById('gpa-text-input');
+    if (!(GPxCreditSumTextIntpueElement instanceof HTMLInputElement) || !(creditSumTextIntpueElement instanceof HTMLInputElement) || !(GPATextInputElement instanceof HTMLInputElement)) {
+        return;
+    }
+    const GPANumber = creditSumNumber !== 0 ? GPxCreditSumNumber / creditSumNumber : 0;
+    GPxCreditSumTextIntpueElement.value = GPxCreditSumNumber.toString();
+    creditSumTextIntpueElement.value = creditSumNumber.toString();
+    GPATextInputElement.value = GPANumber.toString();
 }
 function resetCellsColor() {
     if (!(talbeBodyElement instanceof HTMLTableSectionElement)) {

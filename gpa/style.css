@@ -1,22 +1,22 @@
-table {
+.main-table {
   border-collapse: collapse;
 }
-table th, td {
+.main-table th, .main-table td {
   border: 1px solid;
   text-align: center;
 }
 .outline:focus-within {
   outline: solid;
 }
-table input {
+.main-table input {
   vertical-align: middle;
 }
-table input[type=text], table input[type=number] {
+.main-table input[type=text], .main-table input[type=number] {
   border: none;
   outline: none;
   background-color: transparent;
 }
-table input[type=button] {
+.main-table input[type=button] {
   font-size: 80%;
 }
 .large {

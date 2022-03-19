@@ -17,32 +17,39 @@
       </p>
     </section>
     <section>
+      <h2>計算</h2>
+      <p>選択した科目のGPとGPAを計算する。</p>
+      <p>
+        <input type="button" id="calc-gpa-button-input" value="計算する">
+      </p>
+      <p>結果</p>
+      <table>
+        <tbody>
+          <tr>
+            <td>単位数×GPの和：</td>
+            <td><input type="number" id="credit-gp-sum-text-input"></td>
+          </tr>
+          <tr>
+            <td>単位数の和：</td>
+            <td><input type="number" id="credit-sum-text-input"></td>
+          </tr>
+          <tr>
+            <td>GPA：</td>
+            <td><input type="number" id="gpa-text-input"></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+    <section>
       <h2>表</h2>
       <p>行を追加する。</p>
       <p>
         <input type="button" id="add-button-input" value="行を追加">
       </p>
-      <table>
+      <table class="main-table">
         <thead id="table-head"></thead>
         <tbody id="table-body"></tbody>
       </table>
-    </section>
-    <section>
-      <h2>計算</h2>
-      <p>選択した科目のGPを計算する。</p>
-      <p>
-        <input type="button" id="calc-gp-button-input" value="計算する">
-      </p>
-      <p>選択した科目のGPAを計算する。</p>
-      <p>
-        <input type="button" id="calc-gpa-button-input" value="計算する">
-      </p>
-    </section>
-    <section>
-      <h2>結果</h2>
-      <p>GPの和</p>
-      <p>単位数の和</p>
-      <p>GPA</p>
     </section>
   </main>
   <script type="text/javascript" src="script.js"></script>
