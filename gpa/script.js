@@ -3,12 +3,14 @@ const headTexts = ['科目名', '単位', '評価', '素点', '年度', '学期'
 const additionalHeadTexts = ['GP', '単位数×GP', '選択', '削除'];
 const tableHeadElement = document.getElementById('table-head');
 const talbeBodyElement = document.getElementById('table-body');
+const filterDivElement = document.getElementById('filter-div');
 setupGPA();
 function setupGPA() {
     const fileInputElement = document.getElementById('file-input');
     const calcGPAButtonInputElement = document.getElementById('calc-gpa-button-input');
     const addButtonInputElement = document.getElementById('add-button-input');
     const readTableButtonInputElement = document.getElementById('read-table-button-input');
+    const filterDetailsElement = document.getElementById('filter-details');
     if (fileInputElement instanceof HTMLInputElement) {
         fileInputElement.addEventListener('change', handleFile);
     }
@@ -19,11 +21,15 @@ function setupGPA() {
         addButtonInputElement.addEventListener('click', addRow);
     }
     if (tableHeadElement instanceof HTMLTableSectionElement) {
-        tableHeadElement.appendChild(createHeadRow(headTexts.concat(additionalHeadTexts)));
+        tableHeadElement.appendChild(createHeadRow());
     }
     if (readTableButtonInputElement instanceof HTMLInputElement) {
-        readTableButtonInputElement.addEventListener('click', readTableFromText);
+        readTableButtonInputElement.addEventListener('click', createTableFromText);
     }
+    if (filterDetailsElement instanceof HTMLDetailsElement) {
+        filterDetailsElement.addEventListener('toggle', updateFilter);
+    }
+    createFilter();
 }
 function handleFile(event) {
     if (!(event instanceof Event) || !(event.currentTarget instanceof HTMLInputElement) || !event.currentTarget.files) {
@@ -40,12 +46,12 @@ function handleFile(event) {
         }
         const htmlText = event.target.result;
         const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlText, 'text/html');
-        createTable(doc);
+        const gradeDocument = parser.parseFromString(htmlText, 'text/html');
+        createTable(gradeDocument);
     };
     reader.readAsText(file);
 }
-function createTable(doc) {
+function createTable(gradeDocument) {
     if (!(tableHeadElement instanceof HTMLTableSectionElement) || !(talbeBodyElement instanceof HTMLTableSectionElement)) {
         return;
     }
@@ -56,7 +62,7 @@ function createTable(doc) {
     while (talbeBodyElement.lastChild) {
         talbeBodyElement.removeChild(talbeBodyElement.lastChild);
     }
-    const gradeTableElements = Array.from(doc.getElementsByTagName('table')).filter(tableElement => tableElement.classList.contains('singleTableLine'));
+    const gradeTableElements = Array.from(gradeDocument.getElementsByTagName('table')).filter(tableElement => tableElement.classList.contains('singleTableLine'));
     const gradeTableElement = gradeTableElements.find(tableElement => tableElement.parentElement instanceof HTMLDivElement && tableElement.parentElement.id === 'singleTableArea');
     if (!gradeTableElement) {
         return;
@@ -70,7 +76,7 @@ function createTable(doc) {
             for (const text of texts) {
                 headTexts.push(text);
             }
-            tableHeadElement.appendChild(createHeadRow(headTexts.concat(additionalHeadTexts)));
+            tableHeadElement.appendChild(createHeadRow());
         }
         else {
             if (texts.slice(1).every(text => text === '')) {
@@ -92,26 +98,19 @@ function readRowTexts(rowElement) {
     }
     return texts;
 }
-function createHeadRow(texts) {
+function createHeadRow() {
     const rowElement = document.createElement('tr');
-    for (let i = 0; i < headTexts.concat(additionalHeadTexts).length; i++) {
+    for (const text of headTexts.concat(additionalHeadTexts)) {
         const cellElement = document.createElement('th');
-        const text = texts[i];
-        if (text) {
-            const textNode = document.createTextNode(text);
-            cellElement.appendChild(textNode);
-        }
-        else {
-            const textNode = document.createTextNode('');
-            cellElement.appendChild(textNode);
-        }
+        const textNode = document.createTextNode(text);
+        cellElement.appendChild(textNode);
         rowElement.appendChild(cellElement);
     }
     return rowElement;
 }
 function createBodyRow(texts) {
     const rowElement = document.createElement('tr');
-    for (let i = 0; i < headTexts.length; i++) {
+    for (const [i, text] of headTexts.map((_, i) => { var _a; return (_a = texts[i]) !== null && _a !== void 0 ? _a : ''; }).entries()) {
         const cellElement = document.createElement('td');
         const labelElement = document.createElement('label');
         const textInputElement = document.createElement('input');
@@ -128,15 +127,13 @@ function createBodyRow(texts) {
             textInputElement.type = 'text';
             textInputElement.classList.add('large');
         }
-        const text = texts[i];
-        if (text) {
-            textInputElement.value = text;
-        }
+        textInputElement.value = text;
+        textInputElement.addEventListener('change', updateFilter);
         labelElement.appendChild(textInputElement);
         cellElement.appendChild(labelElement);
         rowElement.appendChild(cellElement);
     }
-    for (let i = 0; i < additionalHeadTexts.length; i++) {
+    for (const [i, _] of additionalHeadTexts.entries()) {
         const cellElement = document.createElement('td');
         const labelElement = document.createElement('label');
         const inputElement = document.createElement('input');
@@ -224,7 +221,7 @@ function calculateGPA() {
         else {
             creditCellElement.classList.add('warning');
         }
-        const inputEvaluationText = evaluationTextInputElement.value.replace(/[\uFF01-\uFF5E]/g, text => String.fromCharCode(text.charCodeAt(0) - 0xFEE0)).toUpperCase().trim();
+        const inputEvaluationText = evaluationTextInputElement.value.replace(/[\uFF01-\uFF5E]/g, char => String.fromCharCode(char.charCodeAt(0) - 0xFEE0)).toUpperCase().trim();
         const inputScoreNumber = scoreTextInputElement.value.trim() !== '' ? Number(scoreTextInputElement.value.trim()) : NaN;
         const checkedEvaluationText = scoreToEvaluationTexts.find(evaluationText => inputEvaluationText === evaluationText);
         if (scoreToEvaluationTexts[inputScoreNumber] !== inputEvaluationText) {
@@ -256,7 +253,13 @@ function showGPA(GPxCreditSumNumber, creditSumNumber) {
     const GPxCreditSumTextIntputElement = document.getElementById('credit-gp-sum-text-input');
     const creditSumTextIntputElement = document.getElementById('credit-sum-text-input');
     const GPATextInputElement = document.getElementById('gpa-text-input');
-    if (!(GPxCreditSumTextIntputElement instanceof HTMLInputElement) || !(creditSumTextIntputElement instanceof HTMLInputElement) || !(GPATextInputElement instanceof HTMLInputElement)) {
+    if (!(GPxCreditSumTextIntputElement instanceof HTMLInputElement)) {
+        return;
+    }
+    if (!(creditSumTextIntputElement instanceof HTMLInputElement)) {
+        return;
+    }
+    if (!(GPATextInputElement instanceof HTMLInputElement)) {
         return;
     }
     const GPANumber = creditSumNumber !== 0 ? GPxCreditSumNumber / creditSumNumber : 0;
@@ -274,7 +277,29 @@ function resetCellsColor() {
         cell.classList.remove('error');
     }
 }
-function readTableFromText() {
+function createFilter() {
+    if (!(filterDivElement instanceof HTMLDivElement)) {
+        return;
+    }
+    while (filterDivElement.lastChild) {
+        filterDivElement.removeChild(filterDivElement.lastChild);
+    }
+    for (const text of headTexts) {
+        const detailsElement = document.createElement('details');
+        const summaryElement = document.createElement('summary');
+        const textNode = document.createTextNode(text);
+        summaryElement.appendChild(textNode);
+        detailsElement.appendChild(summaryElement);
+        filterDivElement.appendChild(detailsElement);
+    }
+}
+function updateFilter() {
+    const filterDetailsElement = document.getElementById('filter-details');
+    if (!(filterDetailsElement instanceof HTMLDetailsElement) || !filterDetailsElement.open) {
+        return;
+    }
+}
+function createTableFromText() {
     if (!(tableHeadElement instanceof HTMLTableSectionElement) || !(talbeBodyElement instanceof HTMLTableSectionElement)) {
         return;
     }
@@ -299,7 +324,7 @@ function readTableFromText() {
             for (const cellText of cellTexts) {
                 headTexts.push(cellText);
             }
-            tableHeadElement.appendChild(createHeadRow(headTexts.concat(additionalHeadTexts)));
+            tableHeadElement.appendChild(createHeadRow());
         }
         else {
             if (cellTexts.length === headTexts.length) {
