@@ -11,17 +11,20 @@
     <h1>GPA計算ツール</h1>
     <section>
       <h2>ファイル読み込み</h2>
-      <p>成績のページを保存し、ダウンロードしたHTMLファイルを入力してください。</p>
+      <p>成績のページを保存し、ダウンロードしたHTMLファイルを選択してください。</p>
       <p>
         <input type="file" id="file-input" accept=".html">
       </p>
-      <p>上記の方法がうまくいかないときは、成績の表全体をコピーして以下にペーストしてください。（非推奨）</p>
-      <p>
-        <textarea id="textarea"></textarea>
-      </p>
-      <p>
-        <input type="button" id="read-table-button-input" value="文字列を読み込む（非推奨）">
-      </p>
+      <details>
+        <summary>テキストの読み込み（未完成）</summary>
+        <p>HTMLファイルを読み込む方法がうまくいかないときは、成績の表全体をコピーして以下にペーストしてください。</p>
+        <p>
+          <textarea id="textarea"></textarea>
+        </p>
+        <p>
+          <input type="button" id="read-table-button-input" value="テキストを読み込む">
+        </p>
+      </details>
     </section>
     <section>
       <h2>計算</h2>
@@ -49,6 +52,26 @@
     </section>
     <section>
       <h2>表</h2>
+      <details id="filter-outer-details">
+        <summary>フィルター（未完成）</summary>
+        <p>
+          <input type="button" value="全選択" id="select-all-button-input">
+          <input type="button" value="全非選択" id="deselect-all-button-input">
+        </p>
+        <div id="filter-outer-div"></div>
+        <p>
+          <input type="button" value="全ての科目を選択">
+          <input type="button" value="全ての科目を非選択">
+          <input type="button" value="指定した科目のみ選択">
+          <input type="button" value="指定した科目のみ非選択">
+        </p>
+        <p>
+          <input type="button" value="全ての科目を表示">
+          <input type="button" value="全ての科目を非表示">
+          <input type="button" value="指定した科目のみ表示">
+          <input type="button" value="指定した科目のみ非表示">
+        </p>
+      </details>
       <p>行を追加する。</p>
       <p>
         <input type="button" id="add-button-input" value="行を追加">

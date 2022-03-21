@@ -3,16 +3,29 @@ const headTexts = ['科目名', '単位', '評価', '素点', '年度', '学期'
 const additionalHeadTexts = ['GP', '単位数×GP', '選択', '削除'];
 const tableHeadElement = document.getElementById('table-head');
 const talbeBodyElement = document.getElementById('table-body');
-const filterDivElement = document.getElementById('filter-div');
+const filterOuterDivElement = document.getElementById('filter-outer-div');
 setupGPA();
 function setupGPA() {
     const fileInputElement = document.getElementById('file-input');
+    const readTableButtonInputElement = document.getElementById('read-table-button-input');
     const calcGPAButtonInputElement = document.getElementById('calc-gpa-button-input');
     const addButtonInputElement = document.getElementById('add-button-input');
-    const readTableButtonInputElement = document.getElementById('read-table-button-input');
-    const filterDetailsElement = document.getElementById('filter-details');
+    const filterDetailsElement = document.getElementById('filter-outer-details');
+    const selectAllButtonInputElement = document.getElementById('select-all-button-input');
+    const deselectAllButtonInputElement = document.getElementById('deselect-all-button-input');
+    if (tableHeadElement instanceof HTMLTableSectionElement) {
+        tableHeadElement.appendChild(createHeadRow());
+    }
+    createFilter();
     if (fileInputElement instanceof HTMLInputElement) {
         fileInputElement.addEventListener('change', handleFile);
+    }
+    if (readTableButtonInputElement instanceof HTMLInputElement) {
+        readTableButtonInputElement.addEventListener('click', () => {
+            createTableFromText();
+            createFilter();
+            updateFilter();
+        });
     }
     if (calcGPAButtonInputElement instanceof HTMLInputElement) {
         calcGPAButtonInputElement.addEventListener('click', calculateGPA);
@@ -20,16 +33,15 @@ function setupGPA() {
     if (addButtonInputElement instanceof HTMLInputElement) {
         addButtonInputElement.addEventListener('click', addRow);
     }
-    if (tableHeadElement instanceof HTMLTableSectionElement) {
-        tableHeadElement.appendChild(createHeadRow());
-    }
-    if (readTableButtonInputElement instanceof HTMLInputElement) {
-        readTableButtonInputElement.addEventListener('click', createTableFromText);
-    }
     if (filterDetailsElement instanceof HTMLDetailsElement) {
         filterDetailsElement.addEventListener('toggle', updateFilter);
     }
-    createFilter();
+    if (selectAllButtonInputElement instanceof HTMLInputElement) {
+        selectAllButtonInputElement.addEventListener('click', selectAll);
+    }
+    if (deselectAllButtonInputElement instanceof HTMLInputElement) {
+        deselectAllButtonInputElement.addEventListener('click', deselectAll);
+    }
 }
 function handleFile(event) {
     if (!(event instanceof Event) || !(event.currentTarget instanceof HTMLInputElement) || !event.currentTarget.files) {
@@ -48,6 +60,8 @@ function handleFile(event) {
         const parser = new DOMParser();
         const gradeDocument = parser.parseFromString(htmlText, 'text/html');
         createTable(gradeDocument);
+        createFilter();
+        updateFilter();
     };
     reader.readAsText(file);
 }
@@ -110,7 +124,10 @@ function createHeadRow() {
 }
 function createBodyRow(texts) {
     const rowElement = document.createElement('tr');
-    for (const [i, text] of headTexts.map((_, i) => { var _a; return (_a = texts[i]) !== null && _a !== void 0 ? _a : ''; }).entries()) {
+    const emptyTexts = [];
+    emptyTexts.length = Math.max(headTexts.length - texts.length, 0);
+    emptyTexts.fill('');
+    for (const [i, text] of texts.concat(emptyTexts).slice(0, headTexts.length).entries()) {
         const cellElement = document.createElement('td');
         const labelElement = document.createElement('label');
         const textInputElement = document.createElement('input');
@@ -278,25 +295,123 @@ function resetCellsColor() {
     }
 }
 function createFilter() {
-    if (!(filterDivElement instanceof HTMLDivElement)) {
+    if (!(filterOuterDivElement instanceof HTMLDivElement)) {
         return;
     }
-    while (filterDivElement.lastChild) {
-        filterDivElement.removeChild(filterDivElement.lastChild);
+    while (filterOuterDivElement.lastChild) {
+        filterOuterDivElement.removeChild(filterOuterDivElement.lastChild);
     }
     for (const text of headTexts) {
         const detailsElement = document.createElement('details');
         const summaryElement = document.createElement('summary');
         const textNode = document.createTextNode(text);
+        const selectAllButtonInputElement = document.createElement('input');
+        const deselectAllButtonInputElement = document.createElement('input');
+        const filterTableElement = document.createElement('table');
+        selectAllButtonInputElement.type = 'button';
+        selectAllButtonInputElement.value = '全選択';
+        selectAllButtonInputElement.addEventListener('click', selectAll);
+        deselectAllButtonInputElement.type = 'button';
+        deselectAllButtonInputElement.value = '全非選択';
+        deselectAllButtonInputElement.addEventListener('click', deselectAll);
         summaryElement.appendChild(textNode);
         detailsElement.appendChild(summaryElement);
-        filterDivElement.appendChild(detailsElement);
+        detailsElement.appendChild(selectAllButtonInputElement);
+        detailsElement.appendChild(deselectAllButtonInputElement);
+        detailsElement.appendChild(filterTableElement);
+        filterOuterDivElement.appendChild(detailsElement);
     }
 }
 function updateFilter() {
-    const filterDetailsElement = document.getElementById('filter-details');
-    if (!(filterDetailsElement instanceof HTMLDetailsElement) || !filterDetailsElement.open) {
+    if (!(talbeBodyElement instanceof HTMLTableSectionElement)) {
         return;
+    }
+    if (!(filterOuterDivElement instanceof HTMLDivElement)) {
+        return;
+    }
+    const filterOuterDetailsElement = document.getElementById('filter-outer-details');
+    if (!(filterOuterDetailsElement instanceof HTMLDetailsElement) || !filterOuterDetailsElement.open) {
+        return;
+    }
+    const filterTableElements = filterOuterDivElement.getElementsByTagName('table');
+    const newFilterMaps = [];
+    for (const [i, filterTableElement] of Array.from(filterTableElements).entries()) {
+        const previousFilterMap = new Map();
+        for (const filterRowElement of filterTableElement.rows) {
+            const filterCheckboxInputElement = filterRowElement.getElementsByTagName('input')[0];
+            previousFilterMap.set(filterRowElement.innerText.trim(), filterCheckboxInputElement.checked);
+        }
+        const newFilterMap = new Map();
+        for (const rowElement of talbeBodyElement.rows) {
+            const cellElement = rowElement.cells[i];
+            if (!cellElement) {
+                return;
+            }
+            const inputElement = cellElement.getElementsByTagName('input')[0];
+            if (!inputElement) {
+                return;
+            }
+            const inputText = inputElement.value.trim();
+            const previousCheckedBoolean = previousFilterMap.get(inputText);
+            if (previousCheckedBoolean === false) {
+                newFilterMap.set(inputText, previousCheckedBoolean);
+            }
+            else {
+                newFilterMap.set(inputText, true);
+            }
+        }
+        newFilterMaps.push(newFilterMap);
+    }
+    for (const filterTableElement of filterTableElements) {
+        while (filterTableElement.lastChild) {
+            filterTableElement.removeChild(filterTableElement.lastChild);
+        }
+    }
+    for (const [i, filterTableElement] of Array.from(filterTableElements).entries()) {
+        const newFilterMap = newFilterMaps[i];
+        if (!newFilterMap) {
+            return;
+        }
+        for (const [filterText, checkedBoolean] of newFilterMap) {
+            const filterRowElement = document.createElement('tr');
+            const filterCellElement = document.createElement('td');
+            const filterLabelElement = document.createElement('label');
+            const filterCheckboxInputElement = document.createElement('input');
+            const filterTextNode = document.createTextNode(filterText);
+            filterCheckboxInputElement.type = 'checkbox';
+            filterCheckboxInputElement.checked = checkedBoolean;
+            filterLabelElement.appendChild(filterCheckboxInputElement);
+            filterLabelElement.appendChild(filterTextNode);
+            filterCellElement.appendChild(filterLabelElement);
+            filterRowElement.appendChild(filterCellElement);
+            filterTableElement.appendChild(filterRowElement);
+        }
+    }
+}
+function selectAll(event) {
+    if (!(event instanceof Event) || !(event.currentTarget instanceof HTMLInputElement)) {
+        return;
+    }
+    const selectAllButtonInputElement = event.currentTarget;
+    const detailsElement = selectAllButtonInputElement.closest('details');
+    if (!detailsElement) {
+        return;
+    }
+    for (const checkboxInputElement of detailsElement.getElementsByTagName('input')) {
+        checkboxInputElement.checked = true;
+    }
+}
+function deselectAll(event) {
+    if (!(event instanceof Event) || !(event.currentTarget instanceof HTMLInputElement)) {
+        return;
+    }
+    const deselectAllButtonInputElement = event.currentTarget;
+    const detailsElement = deselectAllButtonInputElement.closest('details');
+    if (!detailsElement) {
+        return;
+    }
+    for (const checkboxInputElement of detailsElement.getElementsByTagName('input')) {
+        checkboxInputElement.checked = false;
     }
 }
 function createTableFromText() {

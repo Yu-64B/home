@@ -1,4 +1,4 @@
-.main-table {
+table {
   border-collapse: collapse;
 }
 .main-table th, .main-table td {
@@ -31,4 +31,8 @@
 }
 .error {
   background-color: #ffcccc;
+}
+details {
+  border: 1px solid #cccccc;
+  padding: 2px 6px;
 }
