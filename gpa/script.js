@@ -12,7 +12,7 @@ function setupGPA() {
     const addButtonInputElement = document.getElementById('add-button-input');
     const filterDetailsElement = document.getElementById('filter-outer-details');
     const selectAllFiltersButtonInputElement = document.getElementById('select-all-filters-button-input');
-    const deselectAlFilterslButtonInputElement = document.getElementById('deselect-all-filters-button-input');
+    const deselectAllFilterslButtonInputElement = document.getElementById('deselect-all-filters-button-input');
     const selectAllRowsButtonInputElement = document.getElementById('select-all-rows-button-input');
     const deselectAllRowsButtonInputElement = document.getElementById('deselect-all-rows-button-input');
     const selectRowsButtonInputElement = document.getElementById('select-rows-button-input');
@@ -48,8 +48,8 @@ function setupGPA() {
             selectAllFilters(event, true);
         });
     }
-    if (deselectAlFilterslButtonInputElement instanceof HTMLInputElement) {
-        deselectAlFilterslButtonInputElement.addEventListener('click', event => {
+    if (deselectAllFilterslButtonInputElement instanceof HTMLInputElement) {
+        deselectAllFilterslButtonInputElement.addEventListener('click', event => {
             selectAllFilters(event, false);
         });
     }
