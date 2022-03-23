@@ -153,7 +153,7 @@ function createTable(gradeDocument) {
 function readRowTexts(rowElement) {
     const texts = [];
     for (const cellElement of rowElement.cells) {
-        texts.push(cellElement.innerText.trim());
+        texts.push(cellElement.textContent ? cellElement.textContent.trim() : '');
     }
     return texts;
 }
