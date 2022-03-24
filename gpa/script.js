@@ -11,16 +11,11 @@ function setupGPA() {
     const calcGPAButtonInputElement = document.getElementById('calc-gpa-button-input');
     const addButtonInputElement = document.getElementById('add-button-input');
     const filterDetailsElement = document.getElementById('filter-outer-details');
-    const selectAllFiltersButtonInputElement = document.getElementById('select-all-filters-button-input');
-    const deselectAllFilterslButtonInputElement = document.getElementById('deselect-all-filters-button-input');
-    const selectAllRowsButtonInputElement = document.getElementById('select-all-rows-button-input');
-    const deselectAllRowsButtonInputElement = document.getElementById('deselect-all-rows-button-input');
     const selectRowsButtonInputElement = document.getElementById('select-rows-button-input');
     const deselectRowsButtonInputElement = document.getElementById('deselect-rows-button-input');
-    const showAllRowsButtonInputElement = document.getElementById('show-all-rows-button-input');
-    const hiddenAllRowsButtonInputElement = document.getElementById('hidden-all-rows-button-input');
     const showRowsButtonInputElement = document.getElementById('show-rows-button-input');
     const hiddenRowsButtonInputElement = document.getElementById('hidden-rows-button-input');
+    const saveCsvButtonInputElement = document.getElementById('save-csv-button-input');
     if (tableHeadElement instanceof HTMLTableSectionElement) {
         tableHeadElement.appendChild(createHeadRow());
     }
@@ -43,26 +38,6 @@ function setupGPA() {
     if (filterDetailsElement instanceof HTMLDetailsElement) {
         filterDetailsElement.addEventListener('toggle', updateFilters);
     }
-    if (selectAllFiltersButtonInputElement instanceof HTMLInputElement) {
-        selectAllFiltersButtonInputElement.addEventListener('click', event => {
-            selectAllFilters(event, true);
-        });
-    }
-    if (deselectAllFilterslButtonInputElement instanceof HTMLInputElement) {
-        deselectAllFilterslButtonInputElement.addEventListener('click', event => {
-            selectAllFilters(event, false);
-        });
-    }
-    if (selectAllRowsButtonInputElement instanceof HTMLInputElement) {
-        selectAllRowsButtonInputElement.addEventListener('click', _ => {
-            selectAllRows(true);
-        });
-    }
-    if (deselectAllRowsButtonInputElement instanceof HTMLInputElement) {
-        deselectAllRowsButtonInputElement.addEventListener('click', _ => {
-            selectAllRows(false);
-        });
-    }
     if (selectRowsButtonInputElement instanceof HTMLInputElement) {
         selectRowsButtonInputElement.addEventListener('click', _ => {
             selectRows(true);
@@ -71,16 +46,6 @@ function setupGPA() {
     if (deselectRowsButtonInputElement instanceof HTMLInputElement) {
         deselectRowsButtonInputElement.addEventListener('click', _ => {
             selectRows(false);
-        });
-    }
-    if (showAllRowsButtonInputElement instanceof HTMLInputElement) {
-        showAllRowsButtonInputElement.addEventListener('click', _ => {
-            showAllRows(true);
-        });
-    }
-    if (hiddenAllRowsButtonInputElement instanceof HTMLInputElement) {
-        hiddenAllRowsButtonInputElement.addEventListener('click', _ => {
-            showAllRows(false);
         });
     }
     if (showRowsButtonInputElement instanceof HTMLInputElement) {
@@ -92,6 +57,9 @@ function setupGPA() {
         hiddenRowsButtonInputElement.addEventListener('click', _ => {
             showRows(false);
         });
+    }
+    if (saveCsvButtonInputElement instanceof HTMLInputElement) {
+        saveCsvButtonInputElement.addEventListener('click', downloadCsv);
     }
 }
 function handleFile(event) {
@@ -132,7 +100,7 @@ function createTable(gradeDocument) {
         return;
     }
     for (const [i, rowElement] of Array.from(gradeTableElement.rows).entries()) {
-        const texts = readRowTexts(rowElement);
+        const texts = readRow(rowElement);
         if (i === 0) {
             if (texts.some(text => text === '') || texts.length !== (new Set(texts)).size) {
                 return;
@@ -150,7 +118,7 @@ function createTable(gradeDocument) {
         }
     }
 }
-function readRowTexts(rowElement) {
+function readRow(rowElement) {
     const texts = [];
     for (const cellElement of rowElement.cells) {
         texts.push(cellElement.textContent ? cellElement.textContent.trim() : '');
@@ -403,11 +371,11 @@ function updateFilters() {
             }
             const inputText = Array.from(cellElement.getElementsByTagName('input')).map(inputElement => inputElement.value.trim()).join('');
             const previousFilterBoolean = previousFilterMap.get(inputText);
-            if (previousFilterBoolean === false) {
-                newFilterMap.set(inputText, false);
+            if (previousFilterBoolean === true) {
+                newFilterMap.set(inputText, true);
             }
             else {
-                newFilterMap.set(inputText, true);
+                newFilterMap.set(inputText, false);
             }
         }
         for (const [filterText, filterBoolean] of newFilterMap) {
@@ -450,8 +418,8 @@ function selectRows(selectOrDeselectBoolean) {
     selectAllRows(!selectOrDeselectBoolean);
     for (const rowElement of talbeBodyElement.rows) {
         const checkboxInputElement = Array.from(rowElement.getElementsByTagName('input')).find(inputElement => inputElement.type === 'checkbox');
-        const texts = readInputRowTexts(rowElement).slice(0, headTexts.length);
-        let checkedBoolean = selectOrDeselectBoolean;
+        const texts = readInputRow(rowElement).slice(0, headTexts.length);
+        let checkedBoolean = !selectOrDeselectBoolean;
         if (!checkboxInputElement) {
             return;
         }
@@ -461,8 +429,9 @@ function selectRows(selectOrDeselectBoolean) {
                 return;
             }
             const filterBoolean = filterMap.get(text);
-            if (filterBoolean !== selectOrDeselectBoolean) {
-                checkedBoolean = !selectOrDeselectBoolean;
+            if (filterBoolean === true) {
+                checkedBoolean = selectOrDeselectBoolean;
+                break;
             }
         }
         checkboxInputElement.checked = checkedBoolean;
@@ -484,16 +453,17 @@ function showRows(showOrHiddenBoolean) {
     const filterMaps = createFilterMaps();
     showAllRows(!showOrHiddenBoolean);
     for (const rowElement of talbeBodyElement.rows) {
-        const texts = readInputRowTexts(rowElement).slice(0, headTexts.length);
-        let checkedBoolean = showOrHiddenBoolean;
+        const texts = readInputRow(rowElement).slice(0, headTexts.length);
+        let checkedBoolean = !showOrHiddenBoolean;
         for (const [i, text] of texts.entries()) {
             const filterMap = filterMaps[i];
             if (!filterMap) {
                 return;
             }
             const filterBoolean = filterMap.get(text);
-            if (filterBoolean !== showOrHiddenBoolean) {
-                checkedBoolean = !showOrHiddenBoolean;
+            if (filterBoolean === true) {
+                checkedBoolean = showOrHiddenBoolean;
+                break;
             }
         }
         if (checkedBoolean) {
@@ -517,7 +487,7 @@ function showAllRows(checkedBoolean) {
         }
     }
 }
-function readInputRowTexts(rowElement) {
+function readInputRow(rowElement) {
     const texts = [];
     for (const cellElement of rowElement.cells) {
         const text = Array.from(cellElement.getElementsByTagName('input')).map(inputElement => inputElement.value.trim()).join('');
@@ -555,7 +525,7 @@ function createTableFromText() {
     if (!(textareaElement instanceof HTMLTextAreaElement)) {
         return;
     }
-    const rowTexts = textareaElement.value.trim().split('\n\n').map(text => text.trim());
+    const rowTexts = textareaElement.value.trim().split(/\n{2,}/).map(text => text.trim());
     for (const [i, rowText] of rowTexts.entries()) {
         const cellTexts = rowText.split(/[\n|\t]+/).map(text => text.trim());
         if (cellTexts.length <= 1) {
@@ -590,4 +560,23 @@ function createTableFromText() {
             }
         }
     }
+}
+function downloadCsv() {
+    if (!(talbeBodyElement instanceof HTMLTableSectionElement)) {
+        return;
+    }
+    const rowTexts = [headTexts.join(',')];
+    for (const rowElement of talbeBodyElement.rows) {
+        const cellTexts = readInputRow(rowElement).slice(0, headTexts.length);
+        rowTexts.push(cellTexts.join(','));
+    }
+    const csvText = rowTexts.join('\n');
+    const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+    const blob = new Blob([bom, csvText], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const anchorElement = document.createElement('a');
+    anchorElement.download = 'table.csv';
+    anchorElement.href = url;
+    anchorElement.click();
+    URL.revokeObjectURL(url);
 }
