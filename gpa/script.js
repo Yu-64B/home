@@ -39,31 +39,23 @@ function setupGPA() {
         filterDetailsElement.addEventListener('toggle', updateFilters);
     }
     if (selectRowsButtonInputElement instanceof HTMLInputElement) {
-        selectRowsButtonInputElement.addEventListener('click', _ => {
-            selectRows(true);
-        });
+        selectRowsButtonInputElement.addEventListener('click', selectRows);
     }
     if (deselectRowsButtonInputElement instanceof HTMLInputElement) {
-        deselectRowsButtonInputElement.addEventListener('click', _ => {
-            selectRows(false);
-        });
+        deselectRowsButtonInputElement.addEventListener('click', selectRows);
     }
     if (showRowsButtonInputElement instanceof HTMLInputElement) {
-        showRowsButtonInputElement.addEventListener('click', _ => {
-            showRows(true);
-        });
+        showRowsButtonInputElement.addEventListener('click', showRows);
     }
     if (hiddenRowsButtonInputElement instanceof HTMLInputElement) {
-        hiddenRowsButtonInputElement.addEventListener('click', _ => {
-            showRows(false);
-        });
+        hiddenRowsButtonInputElement.addEventListener('click', showRows);
     }
     if (saveCsvButtonInputElement instanceof HTMLInputElement) {
         saveCsvButtonInputElement.addEventListener('click', downloadCsv);
     }
 }
 function handleFile(event) {
-    if (!(event instanceof Event) || !(event.currentTarget instanceof HTMLInputElement) || !event.currentTarget.files) {
+    if (!(event.currentTarget instanceof HTMLInputElement) || !event.currentTarget.files) {
         return;
     }
     const file = event.currentTarget.files[0];
@@ -197,7 +189,7 @@ function addRow() {
     talbeBodyElement.appendChild(createBodyRow(texts));
 }
 function removeRow(event) {
-    if (!(event instanceof Event) || !(event.currentTarget instanceof HTMLInputElement)) {
+    if (!(event.currentTarget instanceof HTMLInputElement)) {
         return;
     }
     const removeButtonInputElement = event.currentTarget;
@@ -323,14 +315,12 @@ function createFilter() {
         const filterTableElement = document.createElement('table');
         selectAllButtonInputElement.type = 'button';
         selectAllButtonInputElement.value = '全選択';
-        selectAllButtonInputElement.addEventListener('click', event => {
-            selectAllFilters(event, true);
-        });
+        selectAllButtonInputElement.classList.add('checked');
+        selectAllButtonInputElement.checked = true;
+        selectAllButtonInputElement.addEventListener('click', selectAllFilters);
         deselectAllButtonInputElement.type = 'button';
         deselectAllButtonInputElement.value = '全非選択';
-        deselectAllButtonInputElement.addEventListener('click', event => {
-            selectAllFilters(event, false);
-        });
+        deselectAllButtonInputElement.addEventListener('click', selectAllFilters);
         summaryElement.appendChild(textNode);
         detailsElement.appendChild(summaryElement);
         detailsElement.appendChild(selectAllButtonInputElement);
@@ -397,11 +387,12 @@ function createFilterRow(filterText, checkedBoolean) {
     filterRowElement.appendChild(filterCellElement);
     return filterRowElement;
 }
-function selectAllFilters(event, checkedBoolean) {
+function selectAllFilters(event) {
     if (!(event.currentTarget instanceof HTMLInputElement)) {
         return;
     }
     const selectAllButtonInputElement = event.currentTarget;
+    const checkedBoolean = selectAllButtonInputElement.checked || selectAllButtonInputElement.classList.contains('checked');
     const detailsElement = selectAllButtonInputElement.closest('details');
     if (!detailsElement) {
         return;
@@ -410,10 +401,12 @@ function selectAllFilters(event, checkedBoolean) {
         checkboxInputElement.checked = checkedBoolean;
     }
 }
-function selectRows(selectOrDeselectBoolean) {
-    if (!(talbeBodyElement instanceof HTMLTableSectionElement)) {
+function selectRows(event) {
+    if (!(talbeBodyElement instanceof HTMLTableSectionElement) || !(event.currentTarget instanceof HTMLInputElement)) {
         return;
     }
+    const selectRowsButtonInputElement = event.currentTarget;
+    const selectOrDeselectBoolean = selectRowsButtonInputElement.checked || selectRowsButtonInputElement.classList.contains('checked');
     const filterMaps = createFilterMaps();
     selectAllRows(!selectOrDeselectBoolean);
     for (const rowElement of talbeBodyElement.rows) {
@@ -446,10 +439,12 @@ function selectAllRows(checkedBoolean) {
         checkboxInputElement.checked = checkedBoolean;
     }
 }
-function showRows(showOrHiddenBoolean) {
-    if (!(talbeBodyElement instanceof HTMLTableSectionElement)) {
+function showRows(event) {
+    if (!(talbeBodyElement instanceof HTMLTableSectionElement) || !(event.currentTarget instanceof HTMLInputElement)) {
         return;
     }
+    const showRowsButtonInputElement = event.currentTarget;
+    const showOrHiddenBoolean = showRowsButtonInputElement.checked || showRowsButtonInputElement.classList.contains('checked');
     const filterMaps = createFilterMaps();
     showAllRows(!showOrHiddenBoolean);
     for (const rowElement of talbeBodyElement.rows) {
