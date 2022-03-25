@@ -1,6 +1,5 @@
 'use strict';
-setup();
-function setup() {
+function setupDefault(putCounter) {
     const url = new URL(document.location.href);
     if (url.hostname.toLowerCase() !== 'yu-64b.github.io') {
         return;
@@ -13,13 +12,13 @@ function setup() {
     const mainDiv = document.createElement('div');
     backgroundDiv.classList.add('background');
     mainDiv.classList.add('main-outer');
-    backgroundDiv.appendChild(createHeader());
+    backgroundDiv.appendChild(createHeader(putCounter));
     mainDiv.appendChild(main);
     backgroundDiv.appendChild(mainDiv);
     backgroundDiv.appendChild(createFooter());
     document.body.appendChild(backgroundDiv);
 }
-function createHeader() {
+function createHeader(putCounter) {
     const header = document.createElement('header');
     const headerStartDiv = document.createElement('div');
     const iconDiv = document.createElement('div');
@@ -38,7 +37,9 @@ function createHeader() {
     iconDiv.appendChild(iconAnchor);
     headerStartDiv.appendChild(iconDiv);
     header.appendChild(headerStartDiv);
-    headerEndDiv.appendChild(createCounter());
+    if (putCounter) {
+        headerEndDiv.appendChild(createCounter());
+    }
     header.appendChild(headerEndDiv);
     return header;
 }
