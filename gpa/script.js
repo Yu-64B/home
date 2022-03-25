@@ -316,7 +316,6 @@ function createFilter() {
         selectAllButtonInputElement.type = 'button';
         selectAllButtonInputElement.value = '全選択';
         selectAllButtonInputElement.classList.add('checked');
-        selectAllButtonInputElement.checked = true;
         selectAllButtonInputElement.addEventListener('click', selectAllFilters);
         deselectAllButtonInputElement.type = 'button';
         deselectAllButtonInputElement.value = '全非選択';
@@ -392,7 +391,7 @@ function selectAllFilters(event) {
         return;
     }
     const selectAllButtonInputElement = event.currentTarget;
-    const checkedBoolean = selectAllButtonInputElement.checked || selectAllButtonInputElement.classList.contains('checked');
+    const checkedBoolean = selectAllButtonInputElement.classList.contains('checked');
     const detailsElement = selectAllButtonInputElement.closest('details');
     if (!detailsElement) {
         return;
@@ -406,7 +405,7 @@ function selectRows(event) {
         return;
     }
     const selectRowsButtonInputElement = event.currentTarget;
-    const selectOrDeselectBoolean = selectRowsButtonInputElement.checked || selectRowsButtonInputElement.classList.contains('checked');
+    const selectOrDeselectBoolean = selectRowsButtonInputElement.classList.contains('checked');
     const filterMaps = createFilterMaps();
     selectAllRows(!selectOrDeselectBoolean);
     for (const rowElement of talbeBodyElement.rows) {
@@ -444,7 +443,7 @@ function showRows(event) {
         return;
     }
     const showRowsButtonInputElement = event.currentTarget;
-    const showOrHiddenBoolean = showRowsButtonInputElement.checked || showRowsButtonInputElement.classList.contains('checked');
+    const showOrHiddenBoolean = showRowsButtonInputElement.classList.contains('checked');
     const filterMaps = createFilterMaps();
     showAllRows(!showOrHiddenBoolean);
     for (const rowElement of talbeBodyElement.rows) {
