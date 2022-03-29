@@ -561,6 +561,10 @@ function downloadCsv() {
     }
     const rowTexts = [headTexts.join(',')];
     for (const rowElement of talbeBodyElement.rows) {
+        const checkboxInputElement = Array.from(rowElement.getElementsByTagName('input')).find(inputElement => inputElement.type === 'checkbox');
+        if (!checkboxInputElement || !checkboxInputElement.checked) {
+            continue;
+        }
         const cellTexts = readInputRow(rowElement).slice(0, headTexts.length);
         rowTexts.push(cellTexts.join(','));
     }
