@@ -16,7 +16,7 @@ function setupDefault(putCounter) {
     mainDiv.appendChild(main);
     backgroundDiv.appendChild(mainDiv);
     backgroundDiv.appendChild(createFooter());
-    document.body.appendChild(backgroundDiv);
+    document.body.insertAdjacentElement('afterbegin', backgroundDiv);
 }
 function createHeader(putCounter) {
     const header = document.createElement('header');
