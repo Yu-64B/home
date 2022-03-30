@@ -92,12 +92,51 @@ function createTableFromHtml(htmlString) {
     }
     createRows(Array.from(gradeTableElement.rows), readTableRow);
 }
-function readTableRow(rowElement) {
-    const tableCellStrings = [];
-    for (const cellElement of rowElement.cells) {
-        tableCellStrings.push(cellElement.textContent ? cellElement.textContent.trim() : '');
+function createTableFromText() {
+    const textareaElement = document.getElementById('textarea');
+    if (!(textareaElement instanceof HTMLTextAreaElement)) {
+        return;
     }
-    return tableCellStrings;
+    const textRowStrings = textareaElement.value.trim().split(/\n{2,}/).map(string => string.trim());
+    createRows(textRowStrings, textRowString => textRowString.split(/[\n|\t]+/).map(string => string.trim()));
+}
+function createTableFromCsv(csvString) {
+    const csvRowStrings = csvString.trim().split('\n').map(string => string.trim());
+    createRows(csvRowStrings, csvRowString => csvRowString.split(',').map(string => string.trim()));
+}
+function createRows(rows, readRowFunction) {
+    if (!(tableHeadElement instanceof HTMLTableSectionElement) || !(talbeBodyElement instanceof HTMLTableSectionElement)) {
+        return;
+    }
+    while (talbeBodyElement.lastChild) {
+        talbeBodyElement.removeChild(talbeBodyElement.lastChild);
+    }
+    for (const [i, row] of rows.entries()) {
+        const cellStrings = readRowFunction(row);
+        if (cellStrings.length <= 1 || cellStrings.slice(1).every(string => string === '')) {
+            continue;
+        }
+        if (i === 0 && cellStrings.every(string => string !== '' && isNaN(Number(string))) && cellStrings.length === (new Set(cellStrings)).size) {
+            headStrings.length = 0;
+            while (tableHeadElement.lastChild) {
+                tableHeadElement.removeChild(tableHeadElement.lastChild);
+            }
+            for (const cellString of cellStrings) {
+                headStrings.push(cellString);
+            }
+            tableHeadElement.appendChild(createHeadRow());
+        }
+        else if (cellStrings.length === headStrings.length) {
+            talbeBodyElement.appendChild(createBodyRow(cellStrings));
+        }
+        else {
+            const emptyStrings = [];
+            emptyStrings.length = Math.max(headStrings.length - cellStrings.length, 0);
+            emptyStrings.fill('');
+            cellStrings.splice(1, 0, '');
+            talbeBodyElement.appendChild(createBodyRow(cellStrings.concat(emptyStrings).slice(0, headStrings.length)));
+        }
+    }
 }
 function createHeadRow() {
     const rowElement = document.createElement('tr');
@@ -161,29 +200,12 @@ function createBodyRow(cellStrings) {
     }
     return rowElement;
 }
-function addRow() {
-    if (!(talbeBodyElement instanceof HTMLTableSectionElement)) {
-        return;
+function readTableRow(rowElement) {
+    const tableCellStrings = [];
+    for (const cellElement of rowElement.cells) {
+        tableCellStrings.push(cellElement.textContent ? cellElement.textContent.trim() : '');
     }
-    const emptyStrings = [];
-    emptyStrings.length = headStrings.length;
-    emptyStrings.fill('');
-    talbeBodyElement.appendChild(createBodyRow(emptyStrings));
-}
-function removeRow(event) {
-    if (!(event.currentTarget instanceof HTMLInputElement)) {
-        return;
-    }
-    const removeButtonInputElement = event.currentTarget;
-    const rowElement = removeButtonInputElement.closest('tr');
-    if (!rowElement) {
-        return;
-    }
-    const talbeBodyElement = rowElement.parentElement;
-    if (!(talbeBodyElement instanceof HTMLTableSectionElement)) {
-        return;
-    }
-    talbeBodyElement.removeChild(rowElement);
+    return tableCellStrings;
 }
 function calculateGPA() {
     if (!(talbeBodyElement instanceof HTMLTableSectionElement)) {
@@ -463,14 +485,6 @@ function showAllRows(checkedBoolean) {
         }
     }
 }
-function readTableInputRow(rowElement) {
-    const tableInputCellStrings = [];
-    for (const cellElement of rowElement.cells) {
-        const tableInputCellString = Array.from(cellElement.getElementsByTagName('input')).map(inputElement => inputElement.value.trim()).join('');
-        tableInputCellStrings.push(tableInputCellString);
-    }
-    return tableInputCellStrings;
-}
 function createFilterMaps() {
     if (!(filterOuterDivElement instanceof HTMLDivElement)) {
         return [];
@@ -490,13 +504,29 @@ function createFilterMaps() {
     }
     return filterMaps;
 }
-function createTableFromText() {
-    const textareaElement = document.getElementById('textarea');
-    if (!(textareaElement instanceof HTMLTextAreaElement)) {
+function addRow() {
+    if (!(talbeBodyElement instanceof HTMLTableSectionElement)) {
         return;
     }
-    const textRowStrings = textareaElement.value.trim().split(/\n{2,}/).map(string => string.trim());
-    createRows(textRowStrings, textRowString => textRowString.split(/[\n|\t]+/).map(string => string.trim()));
+    const emptyStrings = [];
+    emptyStrings.length = headStrings.length;
+    emptyStrings.fill('');
+    talbeBodyElement.appendChild(createBodyRow(emptyStrings));
+}
+function removeRow(event) {
+    if (!(event.currentTarget instanceof HTMLInputElement)) {
+        return;
+    }
+    const removeButtonInputElement = event.currentTarget;
+    const rowElement = removeButtonInputElement.closest('tr');
+    if (!rowElement) {
+        return;
+    }
+    const talbeBodyElement = rowElement.parentElement;
+    if (!(talbeBodyElement instanceof HTMLTableSectionElement)) {
+        return;
+    }
+    talbeBodyElement.removeChild(rowElement);
 }
 function downloadCsv() {
     if (!(talbeBodyElement instanceof HTMLTableSectionElement)) {
@@ -521,41 +551,11 @@ function downloadCsv() {
     anchorElement.click();
     URL.revokeObjectURL(url);
 }
-function createTableFromCsv(csvString) {
-    const csvRowStrings = csvString.trim().split('\n').map(string => string.trim());
-    createRows(csvRowStrings, csvRowString => csvRowString.split(',').map(string => string.trim()));
-}
-function createRows(rows, readRowFunction) {
-    if (!(tableHeadElement instanceof HTMLTableSectionElement) || !(talbeBodyElement instanceof HTMLTableSectionElement)) {
-        return;
+function readTableInputRow(rowElement) {
+    const tableInputCellStrings = [];
+    for (const cellElement of rowElement.cells) {
+        const tableInputCellString = Array.from(cellElement.getElementsByTagName('input')).map(inputElement => inputElement.value.trim()).join('');
+        tableInputCellStrings.push(tableInputCellString);
     }
-    while (talbeBodyElement.lastChild) {
-        talbeBodyElement.removeChild(talbeBodyElement.lastChild);
-    }
-    for (const [i, row] of rows.entries()) {
-        const cellStrings = readRowFunction(row);
-        if (cellStrings.length <= 1 || cellStrings.slice(1).every(string => string === '')) {
-            continue;
-        }
-        if (i === 0 && cellStrings.every(string => string !== '' && isNaN(Number(string))) && cellStrings.length === (new Set(cellStrings)).size) {
-            headStrings.length = 0;
-            while (tableHeadElement.lastChild) {
-                tableHeadElement.removeChild(tableHeadElement.lastChild);
-            }
-            for (const cellString of cellStrings) {
-                headStrings.push(cellString);
-            }
-            tableHeadElement.appendChild(createHeadRow());
-        }
-        else if (cellStrings.length === headStrings.length) {
-            talbeBodyElement.appendChild(createBodyRow(cellStrings));
-        }
-        else {
-            const emptyStrings = [];
-            emptyStrings.length = Math.max(headStrings.length - cellStrings.length, 0);
-            emptyStrings.fill('');
-            cellStrings.splice(1, 0, '');
-            talbeBodyElement.appendChild(createBodyRow(cellStrings.concat(emptyStrings).slice(0, headStrings.length)));
-        }
-    }
+    return tableInputCellStrings;
 }
