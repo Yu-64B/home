@@ -83,47 +83,16 @@ function handleFile(event) {
     reader.readAsText(file);
 }
 function createTableFromHtml(htmlString) {
-    if (!(tableHeadElement instanceof HTMLTableSectionElement) || !(talbeBodyElement instanceof HTMLTableSectionElement)) {
-        return;
-    }
     const parser = new DOMParser();
     const gradeDocument = parser.parseFromString(htmlString, 'text/html');
-    while (talbeBodyElement.lastChild) {
-        talbeBodyElement.removeChild(talbeBodyElement.lastChild);
-    }
     const gradeTableElements = Array.from(gradeDocument.getElementsByTagName('table')).filter(tableElement => tableElement.classList.contains('singleTableLine'));
     const gradeTableElement = gradeTableElements.find(tableElement => tableElement.parentElement instanceof HTMLDivElement && tableElement.parentElement.id === 'singleTableArea');
     if (!gradeTableElement) {
         return;
     }
-    for (const [i, rowElement] of Array.from(gradeTableElement.rows).entries()) {
-        const tableCellStrings = readRow(rowElement);
-        if (tableCellStrings.length <= 1 || tableCellStrings.slice(1).every(string => string === '')) {
-            continue;
-        }
-        if (i === 0 && tableCellStrings.every(string => string !== '' && isNaN(Number(string))) && tableCellStrings.length === (new Set(tableCellStrings)).size) {
-            headStrings.length = 0;
-            while (tableHeadElement.lastChild) {
-                tableHeadElement.removeChild(tableHeadElement.lastChild);
-            }
-            for (const tableCellString of tableCellStrings) {
-                headStrings.push(tableCellString);
-            }
-            tableHeadElement.appendChild(createHeadRow());
-        }
-        else if (tableCellStrings.length === headStrings.length) {
-            talbeBodyElement.appendChild(createBodyRow(tableCellStrings));
-        }
-        else {
-            const emptyStrings = [];
-            emptyStrings.length = Math.max(headStrings.length - tableCellStrings.length, 0);
-            emptyStrings.fill('');
-            tableCellStrings.splice(1, 0, '');
-            talbeBodyElement.appendChild(createBodyRow(tableCellStrings.concat(emptyStrings).slice(0, headStrings.length)));
-        }
-    }
+    createRows(Array.from(gradeTableElement.rows), readTableRow);
 }
-function readRow(rowElement) {
+function readTableRow(rowElement) {
     const tableCellStrings = [];
     for (const cellElement of rowElement.cells) {
         tableCellStrings.push(cellElement.textContent ? cellElement.textContent.trim() : '');
@@ -423,7 +392,7 @@ function selectRows(event) {
     selectAllRows(!selectOrDeselectBoolean);
     for (const rowElement of talbeBodyElement.rows) {
         const checkboxInputElement = Array.from(rowElement.getElementsByTagName('input')).find(inputElement => inputElement.type === 'checkbox');
-        const tableInputCellStrings = readInputRow(rowElement).slice(0, headStrings.length);
+        const tableInputCellStrings = readTableInputRow(rowElement).slice(0, headStrings.length);
         let checkedBoolean = !selectOrDeselectBoolean;
         if (!checkboxInputElement) {
             return;
@@ -460,7 +429,7 @@ function showRows(event) {
     const filterMaps = createFilterMaps();
     showAllRows(!showOrHiddenBoolean);
     for (const rowElement of talbeBodyElement.rows) {
-        const tableInputCellStrings = readInputRow(rowElement).slice(0, headStrings.length);
+        const tableInputCellStrings = readTableInputRow(rowElement).slice(0, headStrings.length);
         let checkedBoolean = !showOrHiddenBoolean;
         for (const [i, tableInputCellString] of tableInputCellStrings.entries()) {
             const filterMap = filterMaps[i];
@@ -494,7 +463,7 @@ function showAllRows(checkedBoolean) {
         }
     }
 }
-function readInputRow(rowElement) {
+function readTableInputRow(rowElement) {
     const tableInputCellStrings = [];
     for (const cellElement of rowElement.cells) {
         const tableInputCellString = Array.from(cellElement.getElementsByTagName('input')).map(inputElement => inputElement.value.trim()).join('');
@@ -522,43 +491,12 @@ function createFilterMaps() {
     return filterMaps;
 }
 function createTableFromText() {
-    if (!(tableHeadElement instanceof HTMLTableSectionElement) || !(talbeBodyElement instanceof HTMLTableSectionElement)) {
-        return;
-    }
-    while (talbeBodyElement.lastChild) {
-        talbeBodyElement.removeChild(talbeBodyElement.lastChild);
-    }
     const textareaElement = document.getElementById('textarea');
     if (!(textareaElement instanceof HTMLTextAreaElement)) {
         return;
     }
     const textRowStrings = textareaElement.value.trim().split(/\n{2,}/).map(string => string.trim());
-    for (const [i, textRowString] of textRowStrings.entries()) {
-        const textCellStrings = textRowString.split(/[\n|\t]+/).map(string => string.trim());
-        if (textCellStrings.length <= 1 || textCellStrings.slice(1).every(string => string === '')) {
-            continue;
-        }
-        if (i === 0 && textCellStrings.every(string => string !== '' && isNaN(Number(string))) && textCellStrings.length === (new Set(textCellStrings)).size) {
-            headStrings.length = 0;
-            while (tableHeadElement.lastChild) {
-                tableHeadElement.removeChild(tableHeadElement.lastChild);
-            }
-            for (const textCellString of textCellStrings) {
-                headStrings.push(textCellString);
-            }
-            tableHeadElement.appendChild(createHeadRow());
-        }
-        else if (textCellStrings.length === headStrings.length) {
-            talbeBodyElement.appendChild(createBodyRow(textCellStrings));
-        }
-        else {
-            const emptyStrings = [];
-            emptyStrings.length = Math.max(headStrings.length - textCellStrings.length, 0);
-            emptyStrings.fill('');
-            textCellStrings.splice(1, 0, '');
-            talbeBodyElement.appendChild(createBodyRow(textCellStrings.concat(emptyStrings).slice(0, headStrings.length)));
-        }
-    }
+    createRows(textRowStrings, textRowString => textRowString.split(/[\n|\t]+/).map(string => string.trim()));
 }
 function downloadCsv() {
     if (!(talbeBodyElement instanceof HTMLTableSectionElement)) {
@@ -570,7 +508,7 @@ function downloadCsv() {
         if (!checkboxInputElement || !checkboxInputElement.checked) {
             continue;
         }
-        const tableInputCellStrings = readInputRow(rowElement).slice(0, headStrings.length);
+        const tableInputCellStrings = readTableInputRow(rowElement).slice(0, headStrings.length);
         csvRowStrings.push(tableInputCellStrings.join(','));
     }
     const csvString = csvRowStrings.join('\n');
@@ -584,37 +522,40 @@ function downloadCsv() {
     URL.revokeObjectURL(url);
 }
 function createTableFromCsv(csvString) {
+    const csvRowStrings = csvString.trim().split('\n').map(string => string.trim());
+    createRows(csvRowStrings, csvRowString => csvRowString.split(',').map(string => string.trim()));
+}
+function createRows(rows, readRowFunction) {
     if (!(tableHeadElement instanceof HTMLTableSectionElement) || !(talbeBodyElement instanceof HTMLTableSectionElement)) {
         return;
     }
     while (talbeBodyElement.lastChild) {
         talbeBodyElement.removeChild(talbeBodyElement.lastChild);
     }
-    const csvRowStrings = csvString.trim().split('\n').map(string => string.trim());
-    for (const [i, csvRowString] of csvRowStrings.entries()) {
-        const csvCellStrings = csvRowString.split(',').map(string => string.trim());
-        if (csvCellStrings.length <= 1 || csvCellStrings.slice(1).every(string => string === '')) {
+    for (const [i, row] of rows.entries()) {
+        const cellStrings = readRowFunction(row);
+        if (cellStrings.length <= 1 || cellStrings.slice(1).every(string => string === '')) {
             continue;
         }
-        if (i === 0 && csvCellStrings.every(string => string !== '' && isNaN(Number(string))) && csvCellStrings.length === (new Set(csvCellStrings)).size) {
+        if (i === 0 && cellStrings.every(string => string !== '' && isNaN(Number(string))) && cellStrings.length === (new Set(cellStrings)).size) {
             headStrings.length = 0;
             while (tableHeadElement.lastChild) {
                 tableHeadElement.removeChild(tableHeadElement.lastChild);
             }
-            for (const csvCellString of csvCellStrings) {
-                headStrings.push(csvCellString);
+            for (const cellString of cellStrings) {
+                headStrings.push(cellString);
             }
             tableHeadElement.appendChild(createHeadRow());
         }
-        else if (csvCellStrings.length === headStrings.length) {
-            talbeBodyElement.appendChild(createBodyRow(csvCellStrings));
+        else if (cellStrings.length === headStrings.length) {
+            talbeBodyElement.appendChild(createBodyRow(cellStrings));
         }
         else {
             const emptyStrings = [];
-            emptyStrings.length = Math.max(headStrings.length - csvCellStrings.length, 0);
+            emptyStrings.length = Math.max(headStrings.length - cellStrings.length, 0);
             emptyStrings.fill('');
-            csvCellStrings.splice(1, 0, '');
-            talbeBodyElement.appendChild(createBodyRow(csvCellStrings.concat(emptyStrings).slice(0, headStrings.length)));
+            cellStrings.splice(1, 0, '');
+            talbeBodyElement.appendChild(createBodyRow(cellStrings.concat(emptyStrings).slice(0, headStrings.length)));
         }
     }
 }
