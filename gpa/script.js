@@ -1,6 +1,6 @@
 'use strict';
-const headTexts = ['科目名', '単位', '評価', '素点', '年度', '学期', '教員氏名'];
-const additionalHeadTexts = ['GP', '単位数×GP', '選択', '削除'];
+const headStrings = ['科目名', '単位', '評価', '素点', '年度', '学期', '教員氏名'];
+const additionalHeadStrings = ['GP', '単位数×GP', '選択', '削除'];
 const tableHeadElement = document.getElementById('table-head');
 const talbeBodyElement = document.getElementById('table-body');
 const filterOuterDivElement = document.getElementById('filter-outer-div');
@@ -75,23 +75,19 @@ function handleFile(event) {
             createTableFromHtml(event.target.result);
             createFilter();
         }
-        else if (file.type === 'text/csv') {
+        else if (file.type === 'text/csv' || file.type === 'application/vnd.ms-excel' || file.type === 'application/octet-stream') {
             createTableFromCsv(event.target.result);
             createFilter();
         }
     };
     reader.readAsText(file);
 }
-function createTableFromHtml(htmlText) {
+function createTableFromHtml(htmlString) {
     if (!(tableHeadElement instanceof HTMLTableSectionElement) || !(talbeBodyElement instanceof HTMLTableSectionElement)) {
         return;
     }
     const parser = new DOMParser();
-    const gradeDocument = parser.parseFromString(htmlText, 'text/html');
-    headTexts.length = 0;
-    while (tableHeadElement.lastChild) {
-        tableHeadElement.removeChild(tableHeadElement.lastChild);
-    }
+    const gradeDocument = parser.parseFromString(htmlString, 'text/html');
     while (talbeBodyElement.lastChild) {
         talbeBodyElement.removeChild(talbeBodyElement.lastChild);
     }
@@ -101,47 +97,55 @@ function createTableFromHtml(htmlText) {
         return;
     }
     for (const [i, rowElement] of Array.from(gradeTableElement.rows).entries()) {
-        const tableCellTexts = readRow(rowElement);
-        if (i === 0) {
-            if (tableCellTexts.some(text => text === '') || tableCellTexts.length !== (new Set(tableCellTexts)).size) {
-                return;
+        const tableCellStrings = readRow(rowElement);
+        if (tableCellStrings.length <= 1 || tableCellStrings.slice(1).every(string => string === '')) {
+            continue;
+        }
+        if (i === 0 && tableCellStrings.every(string => string !== '' && isNaN(Number(string))) && tableCellStrings.length === (new Set(tableCellStrings)).size) {
+            headStrings.length = 0;
+            while (tableHeadElement.lastChild) {
+                tableHeadElement.removeChild(tableHeadElement.lastChild);
             }
-            for (const tableCellText of tableCellTexts) {
-                headTexts.push(tableCellText);
+            for (const tableCellString of tableCellStrings) {
+                headStrings.push(tableCellString);
             }
             tableHeadElement.appendChild(createHeadRow());
         }
+        else if (tableCellStrings.length === headStrings.length) {
+            talbeBodyElement.appendChild(createBodyRow(tableCellStrings));
+        }
         else {
-            if (tableCellTexts.slice(1).every(text => text === '')) {
-                continue;
-            }
-            talbeBodyElement.appendChild(createBodyRow(tableCellTexts));
+            const emptyStrings = [];
+            emptyStrings.length = Math.max(headStrings.length - tableCellStrings.length, 0);
+            emptyStrings.fill('');
+            tableCellStrings.splice(1, 0, '');
+            talbeBodyElement.appendChild(createBodyRow(tableCellStrings.concat(emptyStrings).slice(0, headStrings.length)));
         }
     }
 }
 function readRow(rowElement) {
-    const tableCellTexts = [];
+    const tableCellStrings = [];
     for (const cellElement of rowElement.cells) {
-        tableCellTexts.push(cellElement.textContent ? cellElement.textContent.trim() : '');
+        tableCellStrings.push(cellElement.textContent ? cellElement.textContent.trim() : '');
     }
-    return tableCellTexts;
+    return tableCellStrings;
 }
 function createHeadRow() {
     const rowElement = document.createElement('tr');
-    for (const headText of headTexts.concat(additionalHeadTexts)) {
+    for (const headString of headStrings.concat(additionalHeadStrings)) {
         const cellElement = document.createElement('th');
-        const textNode = document.createTextNode(headText);
+        const textNode = document.createTextNode(headString);
         cellElement.appendChild(textNode);
         rowElement.appendChild(cellElement);
     }
     return rowElement;
 }
-function createBodyRow(cellTexts) {
+function createBodyRow(cellStrings) {
     const rowElement = document.createElement('tr');
-    const emptyTexts = [];
-    emptyTexts.length = Math.max(headTexts.length - cellTexts.length, 0);
-    emptyTexts.fill('');
-    for (const [i, cellText] of cellTexts.concat(emptyTexts).slice(0, headTexts.length).entries()) {
+    const emptyStrings = [];
+    emptyStrings.length = Math.max(headStrings.length - cellStrings.length, 0);
+    emptyStrings.fill('');
+    for (const [i, cellString] of cellStrings.concat(emptyStrings).slice(0, headStrings.length).entries()) {
         const cellElement = document.createElement('td');
         const labelElement = document.createElement('label');
         const textInputElement = document.createElement('input');
@@ -158,13 +162,13 @@ function createBodyRow(cellTexts) {
             textInputElement.type = 'text';
             textInputElement.classList.add('large');
         }
-        textInputElement.value = cellText;
+        textInputElement.value = cellString;
         textInputElement.addEventListener('change', updateFilters);
         labelElement.appendChild(textInputElement);
         cellElement.appendChild(labelElement);
         rowElement.appendChild(cellElement);
     }
-    for (const [i, _] of additionalHeadTexts.entries()) {
+    for (const [i, _] of additionalHeadStrings.entries()) {
         const cellElement = document.createElement('td');
         const labelElement = document.createElement('label');
         const inputElement = document.createElement('input');
@@ -192,10 +196,10 @@ function addRow() {
     if (!(talbeBodyElement instanceof HTMLTableSectionElement)) {
         return;
     }
-    const emptyTexts = [];
-    emptyTexts.length = headTexts.length;
-    emptyTexts.fill('');
-    talbeBodyElement.appendChild(createBodyRow(emptyTexts));
+    const emptyStrings = [];
+    emptyStrings.length = headStrings.length;
+    emptyStrings.fill('');
+    talbeBodyElement.appendChild(createBodyRow(emptyStrings));
 }
 function removeRow(event) {
     if (!(event.currentTarget instanceof HTMLInputElement)) {
@@ -216,7 +220,7 @@ function calculateGPA() {
     if (!(talbeBodyElement instanceof HTMLTableSectionElement)) {
         return;
     }
-    const scoreToEvaluationTexts = ['D', 'D', 'D', 'D', 'D', 'D', 'C', 'B', 'A', 'AA', 'AA'];
+    const scoreToEvaluationStrings = ['D', 'D', 'D', 'D', 'D', 'D', 'C', 'B', 'A', 'AA', 'AA'];
     let GPxCreditSumNumber = 0;
     let creditSumNumber = 0;
     resetCellsColor();
@@ -225,9 +229,9 @@ function calculateGPA() {
         const creditCellElement = cellElements[1];
         const evaluationCellElement = cellElements[2];
         const scoreCellElement = cellElements[3];
-        const GPCellElement = cellElements[headTexts.length];
-        const GPxCreditCellElement = cellElements[headTexts.length + 1];
-        const selectCellElement = cellElements[headTexts.length + 2];
+        const GPCellElement = cellElements[headStrings.length];
+        const GPxCreditCellElement = cellElements[headStrings.length + 1];
+        const selectCellElement = cellElements[headStrings.length + 2];
         if (!creditCellElement || !evaluationCellElement || !scoreCellElement || !GPCellElement || !GPxCreditCellElement || !selectCellElement) {
             return;
         }
@@ -252,18 +256,18 @@ function calculateGPA() {
         else {
             creditCellElement.classList.add('warning');
         }
-        const inputEvaluationText = evaluationTextInputElement.value.replace(/[\uFF01-\uFF5E]/g, char => String.fromCharCode(char.charCodeAt(0) - 0xFEE0)).toUpperCase().trim();
+        const inputEvaluationString = evaluationTextInputElement.value.replace(/[\uFF01-\uFF5E]/g, char => String.fromCharCode(char.charCodeAt(0) - 0xFEE0)).toUpperCase().trim();
         const inputScoreNumber = scoreTextInputElement.value.trim() !== '' ? Number(scoreTextInputElement.value.trim()) : NaN;
-        const filteredEvaluationText = scoreToEvaluationTexts.find(evaluationText => inputEvaluationText === evaluationText);
-        if (scoreToEvaluationTexts[inputScoreNumber] !== inputEvaluationText) {
-            if (filteredEvaluationText && inputScoreNumber in scoreToEvaluationTexts) {
+        const filteredEvaluationString = scoreToEvaluationStrings.find(evaluationString => inputEvaluationString === evaluationString);
+        if (scoreToEvaluationStrings[inputScoreNumber] !== inputEvaluationString) {
+            if (filteredEvaluationString && inputScoreNumber in scoreToEvaluationStrings) {
                 evaluationCellElement.classList.add('warning');
                 scoreCellElement.classList.add('warning');
             }
-            else if (filteredEvaluationText) {
+            else if (filteredEvaluationString) {
                 scoreCellElement.classList.add('warning');
             }
-            else if (inputScoreNumber in scoreToEvaluationTexts) {
+            else if (inputScoreNumber in scoreToEvaluationStrings) {
                 evaluationCellElement.classList.add('warning');
             }
             else {
@@ -272,7 +276,7 @@ function calculateGPA() {
                 continue;
             }
         }
-        const GPNumber = Math.min(Math.max((filteredEvaluationText ? scoreToEvaluationTexts.lastIndexOf(filteredEvaluationText) : inputScoreNumber) - 5, 0), 4);
+        const GPNumber = Math.min(Math.max((filteredEvaluationString ? scoreToEvaluationStrings.lastIndexOf(filteredEvaluationString) : inputScoreNumber) - 5, 0), 4);
         GPTextInputElement.value = GPNumber.toString();
         const GPxCreditNumber = isNaN(inputCreditNumber) ? 0 : inputCreditNumber * GPNumber;
         GPxCreditTextIntputElement.value = GPxCreditNumber.toString();
@@ -315,10 +319,10 @@ function createFilter() {
     while (filterOuterDivElement.lastChild) {
         filterOuterDivElement.removeChild(filterOuterDivElement.lastChild);
     }
-    for (const headText of headTexts) {
+    for (const headString of headStrings) {
         const detailsElement = document.createElement('details');
         const summaryElement = document.createElement('summary');
-        const textNode = document.createTextNode(headText);
+        const textNode = document.createTextNode(headString);
         const selectAllButtonInputElement = document.createElement('input');
         const deselectAllButtonInputElement = document.createElement('input');
         const filterTableElement = document.createElement('table');
@@ -367,26 +371,26 @@ function updateFilters() {
             if (!cellElement) {
                 return;
             }
-            const tableInputCellText = Array.from(cellElement.getElementsByTagName('input')).map(inputElement => inputElement.value.trim()).join('');
-            const previousFilterBoolean = previousFilterMap.get(tableInputCellText);
+            const tableInputCellString = Array.from(cellElement.getElementsByTagName('input')).map(inputElement => inputElement.value.trim()).join('');
+            const previousFilterBoolean = previousFilterMap.get(tableInputCellString);
             if (previousFilterBoolean === true) {
-                newFilterMap.set(tableInputCellText, true);
+                newFilterMap.set(tableInputCellString, true);
             }
             else {
-                newFilterMap.set(tableInputCellText, false);
+                newFilterMap.set(tableInputCellString, false);
             }
         }
-        for (const [filterText, filterBoolean] of newFilterMap) {
-            filterTableElement.appendChild(createFilterRow(filterText, filterBoolean));
+        for (const [filterString, filterBoolean] of newFilterMap) {
+            filterTableElement.appendChild(createFilterRow(filterString, filterBoolean));
         }
     }
 }
-function createFilterRow(filterText, checkedBoolean) {
+function createFilterRow(filterString, checkedBoolean) {
     const filterRowElement = document.createElement('tr');
     const filterCellElement = document.createElement('td');
     const filterLabelElement = document.createElement('label');
     const filterCheckboxInputElement = document.createElement('input');
-    const filterTextNode = document.createTextNode(filterText);
+    const filterTextNode = document.createTextNode(filterString);
     filterCheckboxInputElement.type = 'checkbox';
     filterCheckboxInputElement.checked = checkedBoolean;
     filterLabelElement.appendChild(filterCheckboxInputElement);
@@ -419,17 +423,17 @@ function selectRows(event) {
     selectAllRows(!selectOrDeselectBoolean);
     for (const rowElement of talbeBodyElement.rows) {
         const checkboxInputElement = Array.from(rowElement.getElementsByTagName('input')).find(inputElement => inputElement.type === 'checkbox');
-        const tableInputCellTexts = readInputRow(rowElement).slice(0, headTexts.length);
+        const tableInputCellStrings = readInputRow(rowElement).slice(0, headStrings.length);
         let checkedBoolean = !selectOrDeselectBoolean;
         if (!checkboxInputElement) {
             return;
         }
-        for (const [i, tableInputCellText] of tableInputCellTexts.entries()) {
+        for (const [i, tableInputCellString] of tableInputCellStrings.entries()) {
             const filterMap = filterMaps[i];
             if (!filterMap) {
                 return;
             }
-            const filterBoolean = filterMap.get(tableInputCellText);
+            const filterBoolean = filterMap.get(tableInputCellString);
             if (filterBoolean === true) {
                 checkedBoolean = selectOrDeselectBoolean;
                 break;
@@ -456,14 +460,14 @@ function showRows(event) {
     const filterMaps = createFilterMaps();
     showAllRows(!showOrHiddenBoolean);
     for (const rowElement of talbeBodyElement.rows) {
-        const tableInputCellTexts = readInputRow(rowElement).slice(0, headTexts.length);
+        const tableInputCellStrings = readInputRow(rowElement).slice(0, headStrings.length);
         let checkedBoolean = !showOrHiddenBoolean;
-        for (const [i, tableInputCellText] of tableInputCellTexts.entries()) {
+        for (const [i, tableInputCellString] of tableInputCellStrings.entries()) {
             const filterMap = filterMaps[i];
             if (!filterMap) {
                 return;
             }
-            const filterBoolean = filterMap.get(tableInputCellText);
+            const filterBoolean = filterMap.get(tableInputCellString);
             if (filterBoolean === true) {
                 checkedBoolean = showOrHiddenBoolean;
                 break;
@@ -491,12 +495,12 @@ function showAllRows(checkedBoolean) {
     }
 }
 function readInputRow(rowElement) {
-    const tableInputCellTexts = [];
+    const tableInputCellStrings = [];
     for (const cellElement of rowElement.cells) {
-        const tableInputCellText = Array.from(cellElement.getElementsByTagName('input')).map(inputElement => inputElement.value.trim()).join('');
-        tableInputCellTexts.push(tableInputCellText);
+        const tableInputCellString = Array.from(cellElement.getElementsByTagName('input')).map(inputElement => inputElement.value.trim()).join('');
+        tableInputCellStrings.push(tableInputCellString);
     }
-    return tableInputCellTexts;
+    return tableInputCellStrings;
 }
 function createFilterMaps() {
     if (!(filterOuterDivElement instanceof HTMLDivElement)) {
@@ -528,31 +532,31 @@ function createTableFromText() {
     if (!(textareaElement instanceof HTMLTextAreaElement)) {
         return;
     }
-    const rowTexts = textareaElement.value.trim().split(/\n{2,}/).map(text => text.trim());
-    for (const [i, rowText] of rowTexts.entries()) {
-        const cellTexts = rowText.split(/[\n|\t]+/).map(text => text.trim());
-        if (cellTexts.length <= 1) {
+    const textRowStrings = textareaElement.value.trim().split(/\n{2,}/).map(string => string.trim());
+    for (const [i, textRowString] of textRowStrings.entries()) {
+        const textCellStrings = textRowString.split(/[\n|\t]+/).map(string => string.trim());
+        if (textCellStrings.length <= 1 || textCellStrings.slice(1).every(string => string === '')) {
             continue;
         }
-        if (i === 0 && cellTexts.every(text => text !== '' && isNaN(Number(text))) && cellTexts.length === (new Set(cellTexts)).size) {
-            headTexts.length = 0;
+        if (i === 0 && textCellStrings.every(string => string !== '' && isNaN(Number(string))) && textCellStrings.length === (new Set(textCellStrings)).size) {
+            headStrings.length = 0;
             while (tableHeadElement.lastChild) {
                 tableHeadElement.removeChild(tableHeadElement.lastChild);
             }
-            for (const cellText of cellTexts) {
-                headTexts.push(cellText);
+            for (const textCellString of textCellStrings) {
+                headStrings.push(textCellString);
             }
             tableHeadElement.appendChild(createHeadRow());
         }
-        else if (cellTexts.length === headTexts.length) {
-            talbeBodyElement.appendChild(createBodyRow(cellTexts));
+        else if (textCellStrings.length === headStrings.length) {
+            talbeBodyElement.appendChild(createBodyRow(textCellStrings));
         }
         else {
-            const emptyTexts = [];
-            emptyTexts.length = Math.max(headTexts.length - cellTexts.length, 0);
-            emptyTexts.fill('');
-            cellTexts.splice(1, 0, '');
-            talbeBodyElement.appendChild(createBodyRow(cellTexts.concat(emptyTexts).slice(0, headTexts.length)));
+            const emptyStrings = [];
+            emptyStrings.length = Math.max(headStrings.length - textCellStrings.length, 0);
+            emptyStrings.fill('');
+            textCellStrings.splice(1, 0, '');
+            talbeBodyElement.appendChild(createBodyRow(textCellStrings.concat(emptyStrings).slice(0, headStrings.length)));
         }
     }
 }
@@ -560,18 +564,18 @@ function downloadCsv() {
     if (!(talbeBodyElement instanceof HTMLTableSectionElement)) {
         return;
     }
-    const csvRowTexts = [headTexts.join(',')];
+    const csvRowStrings = [headStrings.join(',')];
     for (const rowElement of talbeBodyElement.rows) {
         const checkboxInputElement = Array.from(rowElement.getElementsByTagName('input')).find(inputElement => inputElement.type === 'checkbox');
         if (!checkboxInputElement || !checkboxInputElement.checked) {
             continue;
         }
-        const tableInputCellTexts = readInputRow(rowElement).slice(0, headTexts.length);
-        csvRowTexts.push(tableInputCellTexts.join(','));
+        const tableInputCellStrings = readInputRow(rowElement).slice(0, headStrings.length);
+        csvRowStrings.push(tableInputCellStrings.join(','));
     }
-    const csvText = csvRowTexts.join('\n');
+    const csvString = csvRowStrings.join('\n');
     const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
-    const blob = new Blob([bom, csvText], { type: 'text/csv' });
+    const blob = new Blob([bom, csvString], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const anchorElement = document.createElement('a');
     anchorElement.download = 'table.csv';
@@ -579,5 +583,38 @@ function downloadCsv() {
     anchorElement.click();
     URL.revokeObjectURL(url);
 }
-function createTableFromCsv(csvText) {
+function createTableFromCsv(csvString) {
+    if (!(tableHeadElement instanceof HTMLTableSectionElement) || !(talbeBodyElement instanceof HTMLTableSectionElement)) {
+        return;
+    }
+    while (talbeBodyElement.lastChild) {
+        talbeBodyElement.removeChild(talbeBodyElement.lastChild);
+    }
+    const csvRowStrings = csvString.trim().split('\n').map(string => string.trim());
+    for (const [i, csvRowString] of csvRowStrings.entries()) {
+        const csvCellStrings = csvRowString.split(',').map(string => string.trim());
+        if (csvCellStrings.length <= 1 || csvCellStrings.slice(1).every(string => string === '')) {
+            continue;
+        }
+        if (i === 0 && csvCellStrings.every(string => string !== '' && isNaN(Number(string))) && csvCellStrings.length === (new Set(csvCellStrings)).size) {
+            headStrings.length = 0;
+            while (tableHeadElement.lastChild) {
+                tableHeadElement.removeChild(tableHeadElement.lastChild);
+            }
+            for (const csvCellString of csvCellStrings) {
+                headStrings.push(csvCellString);
+            }
+            tableHeadElement.appendChild(createHeadRow());
+        }
+        else if (csvCellStrings.length === headStrings.length) {
+            talbeBodyElement.appendChild(createBodyRow(csvCellStrings));
+        }
+        else {
+            const emptyStrings = [];
+            emptyStrings.length = Math.max(headStrings.length - csvCellStrings.length, 0);
+            emptyStrings.fill('');
+            csvCellStrings.splice(1, 0, '');
+            talbeBodyElement.appendChild(createBodyRow(csvCellStrings.concat(emptyStrings).slice(0, headStrings.length)));
+        }
+    }
 }
