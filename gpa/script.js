@@ -6,8 +6,9 @@ const talbeBodyElement = document.getElementById('table-body');
 const filterOuterDivElement = document.getElementById('filter-outer-div');
 setupGPA();
 function setupGPA() {
-    const fileInputElement = document.getElementById('file-input');
+    const htmlFileInputElement = document.getElementById('html-file-input');
     const readTableButtonInputElement = document.getElementById('read-table-button-input');
+    const csvFileInputeElement = document.getElementById('csv-file-input');
     const calcGPAButtonInputElement = document.getElementById('calc-gpa-button-input');
     const addButtonInputElement = document.getElementById('add-button-input');
     const filterDetailsElement = document.getElementById('filter-outer-details');
@@ -20,14 +21,17 @@ function setupGPA() {
         tableHeadElement.appendChild(createHeadRow());
     }
     createFilter();
-    if (fileInputElement instanceof HTMLInputElement) {
-        fileInputElement.addEventListener('change', handleFile);
+    if (htmlFileInputElement instanceof HTMLInputElement) {
+        htmlFileInputElement.addEventListener('change', handleFile);
     }
     if (readTableButtonInputElement instanceof HTMLInputElement) {
         readTableButtonInputElement.addEventListener('click', () => {
             createTableFromText();
             createFilter();
         });
+    }
+    if (csvFileInputeElement instanceof HTMLInputElement) {
+        csvFileInputeElement.addEventListener('change', handleFile);
     }
     if (calcGPAButtonInputElement instanceof HTMLInputElement) {
         calcGPAButtonInputElement.addEventListener('click', calculateGPA);
@@ -59,7 +63,7 @@ function handleFile(event) {
         return;
     }
     const file = event.currentTarget.files[0];
-    if (!file || file.type !== 'text/html') {
+    if (!file) {
         return;
     }
     const reader = new FileReader();
@@ -67,18 +71,23 @@ function handleFile(event) {
         if (!event.target || typeof event.target.result !== 'string') {
             return;
         }
-        const htmlText = event.target.result;
-        const parser = new DOMParser();
-        const gradeDocument = parser.parseFromString(htmlText, 'text/html');
-        createTable(gradeDocument);
-        createFilter();
+        if (file.type === 'text/html') {
+            createTableFromHtml(event.target.result);
+            createFilter();
+        }
+        else if (file.type === 'text/csv') {
+            createTableFromCsv(event.target.result);
+            createFilter();
+        }
     };
     reader.readAsText(file);
 }
-function createTable(gradeDocument) {
+function createTableFromHtml(htmlText) {
     if (!(tableHeadElement instanceof HTMLTableSectionElement) || !(talbeBodyElement instanceof HTMLTableSectionElement)) {
         return;
     }
+    const parser = new DOMParser();
+    const gradeDocument = parser.parseFromString(htmlText, 'text/html');
     headTexts.length = 0;
     while (tableHeadElement.lastChild) {
         tableHeadElement.removeChild(tableHeadElement.lastChild);
@@ -92,47 +101,47 @@ function createTable(gradeDocument) {
         return;
     }
     for (const [i, rowElement] of Array.from(gradeTableElement.rows).entries()) {
-        const texts = readRow(rowElement);
+        const tableCellTexts = readRow(rowElement);
         if (i === 0) {
-            if (texts.some(text => text === '') || texts.length !== (new Set(texts)).size) {
+            if (tableCellTexts.some(text => text === '') || tableCellTexts.length !== (new Set(tableCellTexts)).size) {
                 return;
             }
-            for (const text of texts) {
-                headTexts.push(text);
+            for (const tableCellText of tableCellTexts) {
+                headTexts.push(tableCellText);
             }
             tableHeadElement.appendChild(createHeadRow());
         }
         else {
-            if (texts.slice(1).every(text => text === '')) {
+            if (tableCellTexts.slice(1).every(text => text === '')) {
                 continue;
             }
-            talbeBodyElement.appendChild(createBodyRow(texts));
+            talbeBodyElement.appendChild(createBodyRow(tableCellTexts));
         }
     }
 }
 function readRow(rowElement) {
-    const texts = [];
+    const tableCellTexts = [];
     for (const cellElement of rowElement.cells) {
-        texts.push(cellElement.textContent ? cellElement.textContent.trim() : '');
+        tableCellTexts.push(cellElement.textContent ? cellElement.textContent.trim() : '');
     }
-    return texts;
+    return tableCellTexts;
 }
 function createHeadRow() {
     const rowElement = document.createElement('tr');
-    for (const text of headTexts.concat(additionalHeadTexts)) {
+    for (const headText of headTexts.concat(additionalHeadTexts)) {
         const cellElement = document.createElement('th');
-        const textNode = document.createTextNode(text);
+        const textNode = document.createTextNode(headText);
         cellElement.appendChild(textNode);
         rowElement.appendChild(cellElement);
     }
     return rowElement;
 }
-function createBodyRow(texts) {
+function createBodyRow(cellTexts) {
     const rowElement = document.createElement('tr');
     const emptyTexts = [];
-    emptyTexts.length = Math.max(headTexts.length - texts.length, 0);
+    emptyTexts.length = Math.max(headTexts.length - cellTexts.length, 0);
     emptyTexts.fill('');
-    for (const [i, text] of texts.concat(emptyTexts).slice(0, headTexts.length).entries()) {
+    for (const [i, cellText] of cellTexts.concat(emptyTexts).slice(0, headTexts.length).entries()) {
         const cellElement = document.createElement('td');
         const labelElement = document.createElement('label');
         const textInputElement = document.createElement('input');
@@ -149,7 +158,7 @@ function createBodyRow(texts) {
             textInputElement.type = 'text';
             textInputElement.classList.add('large');
         }
-        textInputElement.value = text;
+        textInputElement.value = cellText;
         textInputElement.addEventListener('change', updateFilters);
         labelElement.appendChild(textInputElement);
         cellElement.appendChild(labelElement);
@@ -183,10 +192,10 @@ function addRow() {
     if (!(talbeBodyElement instanceof HTMLTableSectionElement)) {
         return;
     }
-    const texts = [];
-    texts.length = headTexts.length;
-    texts.fill('');
-    talbeBodyElement.appendChild(createBodyRow(texts));
+    const emptyTexts = [];
+    emptyTexts.length = headTexts.length;
+    emptyTexts.fill('');
+    talbeBodyElement.appendChild(createBodyRow(emptyTexts));
 }
 function removeRow(event) {
     if (!(event.currentTarget instanceof HTMLInputElement)) {
@@ -306,10 +315,10 @@ function createFilter() {
     while (filterOuterDivElement.lastChild) {
         filterOuterDivElement.removeChild(filterOuterDivElement.lastChild);
     }
-    for (const text of headTexts) {
+    for (const headText of headTexts) {
         const detailsElement = document.createElement('details');
         const summaryElement = document.createElement('summary');
-        const textNode = document.createTextNode(text);
+        const textNode = document.createTextNode(headText);
         const selectAllButtonInputElement = document.createElement('input');
         const deselectAllButtonInputElement = document.createElement('input');
         const filterTableElement = document.createElement('table');
@@ -358,13 +367,13 @@ function updateFilters() {
             if (!cellElement) {
                 return;
             }
-            const inputText = Array.from(cellElement.getElementsByTagName('input')).map(inputElement => inputElement.value.trim()).join('');
-            const previousFilterBoolean = previousFilterMap.get(inputText);
+            const tableInputCellText = Array.from(cellElement.getElementsByTagName('input')).map(inputElement => inputElement.value.trim()).join('');
+            const previousFilterBoolean = previousFilterMap.get(tableInputCellText);
             if (previousFilterBoolean === true) {
-                newFilterMap.set(inputText, true);
+                newFilterMap.set(tableInputCellText, true);
             }
             else {
-                newFilterMap.set(inputText, false);
+                newFilterMap.set(tableInputCellText, false);
             }
         }
         for (const [filterText, filterBoolean] of newFilterMap) {
@@ -410,17 +419,17 @@ function selectRows(event) {
     selectAllRows(!selectOrDeselectBoolean);
     for (const rowElement of talbeBodyElement.rows) {
         const checkboxInputElement = Array.from(rowElement.getElementsByTagName('input')).find(inputElement => inputElement.type === 'checkbox');
-        const texts = readInputRow(rowElement).slice(0, headTexts.length);
+        const tableInputCellTexts = readInputRow(rowElement).slice(0, headTexts.length);
         let checkedBoolean = !selectOrDeselectBoolean;
         if (!checkboxInputElement) {
             return;
         }
-        for (const [i, text] of texts.entries()) {
+        for (const [i, tableInputCellText] of tableInputCellTexts.entries()) {
             const filterMap = filterMaps[i];
             if (!filterMap) {
                 return;
             }
-            const filterBoolean = filterMap.get(text);
+            const filterBoolean = filterMap.get(tableInputCellText);
             if (filterBoolean === true) {
                 checkedBoolean = selectOrDeselectBoolean;
                 break;
@@ -447,14 +456,14 @@ function showRows(event) {
     const filterMaps = createFilterMaps();
     showAllRows(!showOrHiddenBoolean);
     for (const rowElement of talbeBodyElement.rows) {
-        const texts = readInputRow(rowElement).slice(0, headTexts.length);
+        const tableInputCellTexts = readInputRow(rowElement).slice(0, headTexts.length);
         let checkedBoolean = !showOrHiddenBoolean;
-        for (const [i, text] of texts.entries()) {
+        for (const [i, tableInputCellText] of tableInputCellTexts.entries()) {
             const filterMap = filterMaps[i];
             if (!filterMap) {
                 return;
             }
-            const filterBoolean = filterMap.get(text);
+            const filterBoolean = filterMap.get(tableInputCellText);
             if (filterBoolean === true) {
                 checkedBoolean = showOrHiddenBoolean;
                 break;
@@ -482,12 +491,12 @@ function showAllRows(checkedBoolean) {
     }
 }
 function readInputRow(rowElement) {
-    const texts = [];
+    const tableInputCellTexts = [];
     for (const cellElement of rowElement.cells) {
-        const text = Array.from(cellElement.getElementsByTagName('input')).map(inputElement => inputElement.value.trim()).join('');
-        texts.push(text);
+        const tableInputCellText = Array.from(cellElement.getElementsByTagName('input')).map(inputElement => inputElement.value.trim()).join('');
+        tableInputCellTexts.push(tableInputCellText);
     }
-    return texts;
+    return tableInputCellTexts;
 }
 function createFilterMaps() {
     if (!(filterOuterDivElement instanceof HTMLDivElement)) {
@@ -525,7 +534,7 @@ function createTableFromText() {
         if (cellTexts.length <= 1) {
             continue;
         }
-        if (i === 0 && cellTexts.every(text => text !== '' && isNaN(Number(text))) && cellTexts.length === (new Set(cellTexts)).size && cellTexts.length === rowText.split(/\t/).length) {
+        if (i === 0 && cellTexts.every(text => text !== '' && isNaN(Number(text))) && cellTexts.length === (new Set(cellTexts)).size) {
             headTexts.length = 0;
             while (tableHeadElement.lastChild) {
                 tableHeadElement.removeChild(tableHeadElement.lastChild);
@@ -535,23 +544,15 @@ function createTableFromText() {
             }
             tableHeadElement.appendChild(createHeadRow());
         }
+        else if (cellTexts.length === headTexts.length) {
+            talbeBodyElement.appendChild(createBodyRow(cellTexts));
+        }
         else {
-            if (cellTexts.length === headTexts.length) {
-                talbeBodyElement.appendChild(createBodyRow(cellTexts));
-            }
-            else if (cellTexts.length === headTexts.length - 1) {
-                cellTexts.splice(1, 0, '');
-                talbeBodyElement.appendChild(createBodyRow(cellTexts));
-            }
-            else {
-                const texts = [];
-                texts.length = headTexts.length;
-                texts.fill('');
-                if (cellTexts[0]) {
-                    texts[0] = cellTexts[0];
-                }
-                talbeBodyElement.appendChild(createBodyRow(texts));
-            }
+            const emptyTexts = [];
+            emptyTexts.length = Math.max(headTexts.length - cellTexts.length, 0);
+            emptyTexts.fill('');
+            cellTexts.splice(1, 0, '');
+            talbeBodyElement.appendChild(createBodyRow(cellTexts.concat(emptyTexts).slice(0, headTexts.length)));
         }
     }
 }
@@ -559,16 +560,16 @@ function downloadCsv() {
     if (!(talbeBodyElement instanceof HTMLTableSectionElement)) {
         return;
     }
-    const rowTexts = [headTexts.join(',')];
+    const csvRowTexts = [headTexts.join(',')];
     for (const rowElement of talbeBodyElement.rows) {
         const checkboxInputElement = Array.from(rowElement.getElementsByTagName('input')).find(inputElement => inputElement.type === 'checkbox');
         if (!checkboxInputElement || !checkboxInputElement.checked) {
             continue;
         }
-        const cellTexts = readInputRow(rowElement).slice(0, headTexts.length);
-        rowTexts.push(cellTexts.join(','));
+        const tableInputCellTexts = readInputRow(rowElement).slice(0, headTexts.length);
+        csvRowTexts.push(tableInputCellTexts.join(','));
     }
-    const csvText = rowTexts.join('\n');
+    const csvText = csvRowTexts.join('\n');
     const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
     const blob = new Blob([bom, csvText], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -577,4 +578,6 @@ function downloadCsv() {
     anchorElement.href = url;
     anchorElement.click();
     URL.revokeObjectURL(url);
+}
+function createTableFromCsv(csvText) {
 }
