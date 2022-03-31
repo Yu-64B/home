@@ -27,10 +27,11 @@ function createHeader(putCounter) {
     const iconImg = document.createElement('img');
     const iconImgUrl = new URL('https://yu-64b.github.io/home/pack_icon.png');
     const headerEndDiv = document.createElement('div');
-    header.classList.add('header-footer-flex-container', 'header-footer-wrap-container', 'header-footer-large-gap-container');
+    header.classList.add('header', 'header-footer-flex-container', 'header-footer-wrap-container', 'header-footer-large-gap-container');
     headerStartDiv.classList.add('header-start-item');
     iconAnchor.classList.add('header-footer-flex-container');
     iconAnchor.href = iconUrl.href;
+    iconImg.classList.add('img');
     iconImg.src = iconImgUrl.href;
     headerEndDiv.classList.add('header-end-item');
     iconAnchor.appendChild(iconImg);
@@ -65,6 +66,7 @@ function createCounter() {
             imgUrl.searchParams.set('username', usernameString);
         }
     }
+    img.classList.add('img');
     img.src = imgUrl.href;
     img.alt = 'カウンター';
     img.crossOrigin = 'anonymous';
@@ -88,7 +90,7 @@ function createFooter() {
     const urlAnchor = document.createElement('a');
     const url = new URL('https://docs.github.com/en/pages');
     const urlText = document.createTextNode('Powered by GitHub Pages');
-    footer.classList.add('header-footer-flex-container');
+    footer.classList.add('footer', 'header-footer-flex-container');
     urlAnchor.classList.add('header-footer-link');
     urlAnchor.target = '_blank';
     urlAnchor.rel = 'noopener noreferrer';
