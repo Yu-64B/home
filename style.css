@@ -3,13 +3,15 @@
 }
 .heading {
   border-bottom: 1px solid #cccccc;
-  padding-top: 16px;
+}
+.section {
+  margin: 19.92px auto;
 }
 .table {
   border-collapse: collapse;
 }
 .table th, .table td {
-  padding: 0 8px;
+  padding: 4px 8px;
 }
 .border-table th, .border-table td {
   border: 1px solid;

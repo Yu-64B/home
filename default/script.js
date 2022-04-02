@@ -25,9 +25,9 @@ function createHeader(putCounter) {
     const iconAnchor = document.createElement('a');
     const iconUrl = new URL('https://yu-64b.github.io/home');
     const iconImg = document.createElement('img');
-    const iconImgUrl = new URL('https://yu-64b.github.io/home/pack_icon.png');
+    const iconImgUrl = new URL('https://yu-64b.github.io/home/default/pack_icon.png');
     const headerEndDiv = document.createElement('div');
-    header.classList.add('header', 'header-footer-flex-container', 'header-footer-wrap-container', 'header-footer-large-gap-container');
+    header.classList.add('header', 'header-footer-flex-container');
     headerStartDiv.classList.add('header-start-item');
     iconAnchor.classList.add('header-footer-flex-container');
     iconAnchor.href = iconUrl.href;
@@ -57,7 +57,7 @@ function createCounter() {
     const url = new URL('https://www.000webhost.com');
     const urlText = document.createTextNode('Powered by 000webhost');
     counterDiv.classList.add('counter-item');
-    counterInnerDiv.classList.add('header-footer-flex-container', 'header-footer-wrap-container', 'header-footer-small-gap-container');
+    counterInnerDiv.classList.add('header-footer-flex-container');
     imgDiv.classList.add('header-footer-flex-container');
     imgUrl.searchParams.set('id', '0');
     if (localStorage && localStorage.getItem('username') && typeof localStorage.getItem('username') === 'string') {

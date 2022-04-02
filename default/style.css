@@ -26,21 +26,14 @@
 .header, .footer {
   background-color: #333333;
   color: #ffffff;
-  padding: 8px;
+  padding: 16px;
 }
 .header-footer-flex-container {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-.header-footer-wrap-container {
   flex-wrap: wrap;
-}
-.header-footer-large-gap-container {
   gap: 8px;
-}
-.header-footer-small-gap-container {
-  gap: 4px;
 }
 .header-footer-link {
   font-size: calc(5em / 6);
@@ -63,7 +56,7 @@
 .counter-item {
   border: 1px solid #666666;
   text-align: center;
-  padding: 4px;
+  padding: 8px;
 }
 .img {
   font-size: calc(2em / 3);
