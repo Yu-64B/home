@@ -1,0 +1,158 @@
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width">
+  <link rel="icon" href="../default/favicon.ico">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="body">
+  <main id="main" class="main">
+    <h1>履修登録補助ツール</h1>
+    <section>
+      <h2>ファイルの生成と読み込み</h2>
+      <p>履修登録の授業の選択の画面でデベロッパー ツールなどを開き、デベロッパー ツールなどのコンソールに以下のコードをコピー、ペーストして実行してください。成功するとJSONファイルが生成されるので、それをダウンロードし、保存したJSONファイルを選択してください。</p>
+      <pre class="pre">(function () {
+    'use strict';
+    if (typeof rishuKanoListWindow !== 'function') {
+        return;
+    }
+    const functionString = rishuKanoListWindow.toString().replace('rishuKanoListWindow', '').replace(/var\s+?url.*?;/, '$&\n\t\treturn url;');
+    const tags = ['th', 'td'];
+    const promises = [];
+    const semesters = getTableGroups(document);
+    Promise.all(promises).then(() => {
+        if (!semesters) {
+            return;
+        }
+        const json = JSON.stringify(semesters);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const aElement = document.createElement('a');
+        aElement.download = 'courses.json';
+        aElement.href = url;
+        aElement.click();
+        URL.revokeObjectURL(url);
+    }).catch(error => {
+        console.log(error);
+    });
+    function getTableGroups(doc) {
+        const tableGroups = [];
+        const tableElements = Array.from(doc.getElementsByTagName('table')).filter(tableElement => tableElement.classList.contains('listTable'));
+        let prevTitle = '';
+        const tables = [];
+        for (const [i, tableElement] of tableElements.entries()) {
+            const newTitle = getTitle(tableElement);
+            if (newTitle) {
+                if (i !== 0) {
+                    if (!prevTitle) {
+                        return;
+                    }
+                    const tableGroup = {
+                        title: prevTitle,
+                        tables: tables.splice(0)
+                    };
+                    tableGroups.push(tableGroup);
+                }
+                prevTitle = newTitle;
+            }
+            const rows = [];
+            for (const rowElement of tableElement.rows) {
+                const cellElements = Array.from(rowElement.cells);
+                const cells = [];
+                cells.length = cellElements.length;
+                for (const [i, cellElement] of cellElements.entries()) {
+                    const tag = tags.find(tag => cellElement.tagName.toLowerCase() === tag);
+                    if (!tag) {
+                        return;
+                    }
+                    const textContent = (cellElement.textContent && cellElement.textContent.trim()) ? cellElement.textContent.trim() : undefined;
+                    const checkboxElement = Array.from(cellElement.getElementsByTagName('input')).find(inputElement => inputElement.type === 'checkbox');
+                    const checkbox = checkboxElement ? {
+                        disabled: checkboxElement.disabled,
+                        checked: checkboxElement.checked,
+                        value: checkboxElement.value
+                    } : undefined;
+                    const selectImgElement = Array.from(cellElement.getElementsByTagName('img')).find(imgElement => imgElement.alt === '選択');
+                    if (!selectImgElement) {
+                        const cell = {
+                            tag: tag,
+                            text_content: textContent,
+                            checkbox: checkbox
+                        };
+                        cells[i] = cell;
+                    }
+                    else {
+                        if (!selectImgElement.parentElement) {
+                            return;
+                        }
+                        const onclickString = selectImgElement.parentElement.getAttribute('onclick');
+                        if (!onclickString) {
+                            return;
+                        }
+                        const argsString = onclickString.match(/\(.*?\)\s*?;/);
+                        if (!argsString || !argsString[0]) {
+                            return;
+                        }
+                        const getUrlFunction = new Function('return (' + functionString + ')' + argsString[0]);
+                        const urlString = getUrlFunction();
+                        if (typeof urlString !== 'string') {
+                            return;
+                        }
+                        const promise = new Promise((resolve, reject) => {
+                            fetch(urlString).then(response => {
+                                return response.text();
+                            }).then(text => {
+                                const parser = new DOMParser();
+                                const innerDoc = parser.parseFromString(text, 'text/html');
+                                const classes = getTableGroups(innerDoc);
+                                if (!classes) {
+                                    reject();
+                                }
+                                const cell = {
+                                    tag: tag,
+                                    text_content: textContent,
+                                    checkbox: checkbox,
+                                    table_groups: classes
+                                };
+                                cells[i] = cell;
+                                resolve();
+                            }).catch(error => {
+                                reject(error);
+                            });
+                        });
+                        promises.push(promise);
+                    }
+                }
+                rows.push(cells);
+            }
+            tables.push(rows);
+            if (i === tableElements.length - 1) {
+                if (!prevTitle) {
+                    return;
+                }
+                const tableGroup = {
+                    title: prevTitle,
+                    tables: tables.splice(0)
+                };
+                tableGroups.push(tableGroup);
+            }
+        }
+        return tableGroups;
+    }
+    function getTitle(tableElement) {
+        const closestRowElement = tableElement.closest('tr');
+        if (!closestRowElement || !(closestRowElement.previousElementSibling instanceof HTMLTableRowElement)) {
+            return '';
+        }
+        const titleRowElement = closestRowElement.previousElementSibling;
+        return Array.from(titleRowElement.getElementsByTagName('b')).map(bElement => bElement.textContent ? bElement.textContent.trim() : '').join(' ') || Array.from(titleRowElement.cells).map(cellElement => cellElement.textContent ? cellElement.textContent.trim() : '').join(' ');
+    }
+})();</pre>
+      <p>
+        <input type="file" id="json-file-input" accept="application/json">
+      </p>
+    </section>
+  </main>
+  <script type="text/javascript" src="script.js"></script>
+</body>
+</html>
