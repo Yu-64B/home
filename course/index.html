@@ -10,18 +10,24 @@
     <h1>履修登録補助ツール</h1>
     <section>
       <h2>ファイルの生成と読み込み</h2>
-      <p>履修登録の授業の選択の画面でデベロッパー ツールなどを開き、デベロッパー ツールなどのコンソールに以下のコードをコピー、ペーストして実行してください。成功するとJSONファイルが生成されるので、それをダウンロードし、保存したJSONファイルを選択してください。</p>
+      <p>履修登録の授業の選択のページでデベロッパー ツールなどを開き、デベロッパー ツールなどのコンソールに以下のコードをコピー、ペーストして実行してください。成功するとJSONファイルが生成されるので、それをダウンロードし、保存したJSONファイルを選択してください。</p>
+      <p>
+        <input type="button" id="read-copy-button-input" value="Copy">
+      </p>
       <pre class="pre">(function () {
     'use strict';
-    if (typeof rishuKanoListWindow !== 'function') {
-        return;
+    const getSyllabus = false;
+    const message = getSyllabus ? '全てのシラバスのURLを取得します。これはサーバーに大きな負荷をかける可能性があり、時間がかかります。本当によろしいですか?' : 'ダウンロードを開始します。よろしいですか?';
+    const result = confirm(message);
+    if (!result) {
+        console.log('キャンセルされました。');
     }
-    const functionString = rishuKanoListWindow.toString().replace('rishuKanoListWindow', '').replace(/var\s+?url.*?;/, '$&\n\t\treturn url;');
-    const tags = ['th', 'td'];
     const promises = [];
-    const semesters = getTableGroups(document);
+    let delayMs = 0;
+    const semesters = getTableGroups(document, promises, null, 0);
     Promise.all(promises).then(() => {
         if (!semesters) {
+            console.log('Error');
             return;
         }
         const json = JSON.stringify(semesters);
@@ -35,7 +41,7 @@
     }).catch(error => {
         console.log(error);
     });
-    function getTableGroups(doc) {
+    function getTableGroups(doc, promises, parentDoc, startMs) {
         const tableGroups = [];
         const tableElements = Array.from(doc.getElementsByTagName('table')).filter(tableElement => tableElement.classList.contains('listTable'));
         let prevTitle = '';
@@ -57,71 +63,9 @@
             }
             const rows = [];
             for (const rowElement of tableElement.rows) {
-                const cellElements = Array.from(rowElement.cells);
-                const cells = [];
-                cells.length = cellElements.length;
-                for (const [i, cellElement] of cellElements.entries()) {
-                    const tag = tags.find(tag => cellElement.tagName.toLowerCase() === tag);
-                    if (!tag) {
-                        return;
-                    }
-                    const textContent = (cellElement.textContent && cellElement.textContent.trim()) ? cellElement.textContent.trim() : undefined;
-                    const checkboxElement = Array.from(cellElement.getElementsByTagName('input')).find(inputElement => inputElement.type === 'checkbox');
-                    const checkbox = checkboxElement ? {
-                        disabled: checkboxElement.disabled,
-                        checked: checkboxElement.checked,
-                        value: checkboxElement.value
-                    } : undefined;
-                    const selectImgElement = Array.from(cellElement.getElementsByTagName('img')).find(imgElement => imgElement.alt === '選択');
-                    if (!selectImgElement) {
-                        const cell = {
-                            tag: tag,
-                            text_content: textContent,
-                            checkbox: checkbox
-                        };
-                        cells[i] = cell;
-                    }
-                    else {
-                        if (!selectImgElement.parentElement) {
-                            return;
-                        }
-                        const onclickString = selectImgElement.parentElement.getAttribute('onclick');
-                        if (!onclickString) {
-                            return;
-                        }
-                        const argsString = onclickString.match(/\(.*?\)\s*?;/);
-                        if (!argsString || !argsString[0]) {
-                            return;
-                        }
-                        const getUrlFunction = new Function('return (' + functionString + ')' + argsString[0]);
-                        const urlString = getUrlFunction();
-                        if (typeof urlString !== 'string') {
-                            return;
-                        }
-                        const promise = new Promise((resolve, reject) => {
-                            fetch(urlString).then(response => {
-                                return response.text();
-                            }).then(text => {
-                                const parser = new DOMParser();
-                                const innerDoc = parser.parseFromString(text, 'text/html');
-                                const classes = getTableGroups(innerDoc);
-                                if (!classes) {
-                                    reject();
-                                }
-                                const cell = {
-                                    tag: tag,
-                                    text_content: textContent,
-                                    checkbox: checkbox,
-                                    table_groups: classes
-                                };
-                                cells[i] = cell;
-                                resolve();
-                            }).catch(error => {
-                                reject(error);
-                            });
-                        });
-                        promises.push(promise);
-                    }
+                const cells = getCells(rowElement, doc, promises, parentDoc, getSyllabus, startMs);
+                if (!cells) {
+                    return;
                 }
                 rows.push(cells);
             }
@@ -139,6 +83,121 @@
         }
         return tableGroups;
     }
+    function getCells(rowElement, doc, promises, parentDoc, getSyllabus, startMs) {
+        const cellElements = Array.from(rowElement.cells);
+        const tags = ['th', 'td'];
+        const cells = [];
+        cells.length = cellElements.length;
+        for (const [i, cellElement] of cellElements.entries()) {
+            const tag = tags.find(tag => cellElement.tagName.toLowerCase() === tag);
+            if (!tag) {
+                return;
+            }
+            const checkboxElement = Array.from(cellElement.getElementsByTagName('input')).find(inputElement => inputElement.type === 'checkbox');
+            const selectImgElement = Array.from(cellElement.getElementsByTagName('img')).find(imgElement => imgElement.alt === '選択');
+            const deleteImgElement = Array.from(cellElement.getElementsByTagName('img')).find(imgElement => imgElement.alt === '削除');
+            const syllabusImgElement = Array.from(cellElement.getElementsByTagName('img')).find(imgElement => imgElement.alt === 'シラバス参照');
+            const textContent = cellElement.textContent && cellElement.textContent.trim() ? cellElement.textContent.trim() : undefined;
+            if (checkboxElement) {
+                const checkbox = {
+                    disabled: checkboxElement.disabled,
+                    checked: checkboxElement.checked,
+                    value: checkboxElement.value
+                };
+                const cell = {
+                    tag: tag,
+                    checkbox: checkbox
+                };
+                cells[i] = cell;
+            }
+            else if (selectImgElement) {
+                const url = getSelectUrlFromImg(selectImgElement);
+                if (!url) {
+                    return;
+                }
+                const baseDelayMs = parentDoc ? 200 : 100;
+                const randMs = baseDelayMs + Math.floor(Math.random() * baseDelayMs);
+                delayMs += randMs;
+                const promise = new Promise(resolve => {
+                    return setTimeout(resolve, delayMs - startMs);
+                }).then(() => {
+                    return fetch(url);
+                }).then(response => {
+                    console.log(response.url);
+                    return response.text();
+                }).then(text => {
+                    const parser = new DOMParser();
+                    const childDoc = parser.parseFromString(text, 'text/html');
+                    const childPromises = [];
+                    const classes = getTableGroups(childDoc, childPromises, doc, delayMs);
+                    if (!classes) {
+                        throw undefined;
+                    }
+                    const cell = {
+                        tag: tag,
+                        table_groups: classes
+                    };
+                    cells[i] = cell;
+                    return Promise.all(childPromises);
+                });
+                promises.push(promise);
+            }
+            else if (deleteImgElement) {
+                const cell = {
+                    tag: tag
+                };
+                cells[i] = cell;
+            }
+            else if (syllabusImgElement && getSyllabus) {
+                const form1FormElement = parentDoc ? parentDoc.getElementById('form1') : doc.getElementById('form1');
+                if (!(form1FormElement instanceof HTMLFormElement)) {
+                    return;
+                }
+                const url = form1FormElement.action;
+                const formData = getSyllabusFormFromImg(syllabusImgElement, doc, parentDoc, form1FormElement);
+                if (!formData) {
+                    return;
+                }
+                const baseDelayMs = parentDoc ? 200 : 100;
+                const randMs = baseDelayMs + Math.floor(Math.random() * baseDelayMs);
+                delayMs += randMs;
+                const promise = new Promise(resolve => {
+                    return setTimeout(resolve, delayMs - startMs);
+                }).then(() => {
+                    return fetch(url, {
+                        method: 'POST',
+                        body: formData
+                    });
+                }).then(response => {
+                    console.log(response.url);
+                    return response.text();
+                }).then(text => {
+                    const parser = new DOMParser();
+                    const childDoc = parser.parseFromString(text, 'text/html');
+                    const syllabusUrl = getSyllabusUrl(childDoc);
+                    if (!syllabusUrl) {
+                        throw undefined;
+                    }
+                    const cell = {
+                        tag: tag,
+                        syllabus: syllabusUrl,
+                        text_content: textContent
+                    };
+                    cells[i] = cell;
+                    return Promise.all([]);
+                });
+                promises.push(promise);
+            }
+            else {
+                const cell = {
+                    tag: tag,
+                    text_content: textContent
+                };
+                cells[i] = cell;
+            }
+        }
+        return cells;
+    }
     function getTitle(tableElement) {
         const closestRowElement = tableElement.closest('tr');
         if (!closestRowElement || !(closestRowElement.previousElementSibling instanceof HTMLTableRowElement)) {
@@ -147,10 +206,148 @@
         const titleRowElement = closestRowElement.previousElementSibling;
         return Array.from(titleRowElement.getElementsByTagName('b')).map(bElement => bElement.textContent ? bElement.textContent.trim() : '').join(' ') || Array.from(titleRowElement.cells).map(cellElement => cellElement.textContent ? cellElement.textContent.trim() : '').join(' ');
     }
-})();</pre>
+    function getSelectUrlFromImg(selectImgElement) {
+        if (!selectImgElement.parentElement) {
+            return;
+        }
+        const onclickString = selectImgElement.parentElement.getAttribute('onclick');
+        if (!onclickString) {
+            return;
+        }
+        const argsRegExpMatchArray = onclickString.match(/\((.*?)\)/);
+        if (!argsRegExpMatchArray || !argsRegExpMatchArray[1]) {
+            return;
+        }
+        const [nendo, gakki, kbn, row, col, flg] = argsRegExpMatchArray[1].split(',').map(argString => argString.trim() ? Number(argString.trim()) : NaN);
+        if (!nendo || isNaN(nendo) || !gakki || isNaN(gakki) || !kbn || isNaN(kbn) || !row || isNaN(row) || !col || isNaN(col) || !flg || isNaN(flg)) {
+            return;
+        }
+        const url = getSelectUrl(nendo, gakki, kbn, row, col, flg);
+        return url;
+    }
+    function getSelectUrl(nendo, gakki, kbn, row, col, flg) {
+        if (flg === 0) {
+            const yobi = row;
+            const jigen = col;
+            const url = "/up/faces/up/km/pKmb0801A.jsp?sanshoTblFlg=1&nendo=" + nendo + "&gakki=" + gakki + "&kbn=" + kbn + "&yobi=" + yobi + "&jigen=" + jigen;
+            return url;
+        }
+        else {
+            const yobi = col;
+            const jigen = row;
+            const url = "/up/faces/up/km/pKmb0801A.jsp?sanshoTblFlg=1&nendo=" + nendo + "&gakki=" + gakki + "&kbn=" + kbn + "&yobi=" + yobi + "&jigen=" + jigen;
+            return url;
+        }
+    }
+    function getSyllabusFormFromImg(syllabusImgElement, doc, parentDoc, form1FormElement) {
+        if (!syllabusImgElement.parentElement) {
+            return;
+        }
+        const onclickString = syllabusImgElement.parentElement.getAttribute('onclick');
+        if (!onclickString) {
+            return;
+        }
+        const argsRegExpMatchArray = onclickString.match(/\((.*?)\)/);
+        if (!argsRegExpMatchArray || !argsRegExpMatchArray[1]) {
+            return;
+        }
+        const [jugyoCd] = argsRegExpMatchArray[1].split(',').map(argString => argString.trim());
+        if (!jugyoCd) {
+            return;
+        }
+        const formData = parentDoc ? getChildSyllabusForm(doc, parentDoc, jugyoCd, form1FormElement) : getSyllabusForm(doc, jugyoCd, form1FormElement);
+        return formData;
+    }
+    function getChildSyllabusForm(doc, parentDoc, jugyoCd, form1FormElement) {
+        const urlOkFlgInputElement = doc.getElementById('form1:urlOkFlg');
+        const koGmnJugyoCdParentInputElement = parentDoc.getElementById('form1:koGmnJugyoCd');
+        const koGmnFlgParentInputElement = parentDoc.getElementById('form1:koGmnFlg');
+        const urlOkFlgParentInputElement = parentDoc.getElementById('form1:urlOkFlg');
+        if (!(urlOkFlgInputElement instanceof HTMLInputElement) || urlOkFlgInputElement.value !== '1' || !(koGmnJugyoCdParentInputElement instanceof HTMLInputElement) || !(koGmnFlgParentInputElement instanceof HTMLInputElement) || !(urlOkFlgParentInputElement instanceof HTMLInputElement) || !(form1FormElement instanceof HTMLFormElement)) {
+            return;
+        }
+        koGmnJugyoCdParentInputElement.value = jugyoCd;
+        koGmnFlgParentInputElement.value = '1';
+        urlOkFlgParentInputElement.value = urlOkFlgInputElement.value;
+        return new FormData(form1FormElement);
+    }
+    function getSyllabusForm(doc, jugyoCd, form1FormElement) {
+        const koGmnFlgInputElement = doc.getElementById('form1:koGmnFlg');
+        if (!(koGmnFlgInputElement instanceof HTMLInputElement)) {
+            return;
+        }
+        if (koGmnFlgInputElement.value === '0') {
+            const jugyoCdInputElement = doc.getElementById('form1:jugyoCd');
+            if (!(jugyoCdInputElement instanceof HTMLInputElement)) {
+                return;
+            }
+            jugyoCdInputElement.value = jugyoCd;
+        }
+        else {
+            const koGmnJugyoCdInputElement = doc.getElementById('form1:koGmnJugyoCd');
+            if (!(koGmnJugyoCdInputElement instanceof HTMLInputElement)) {
+                return;
+            }
+            koGmnJugyoCdInputElement.value = jugyoCd;
+            koGmnFlgInputElement.value = '0';
+        }
+        return new FormData(form1FormElement);
+    }
+    function getSyllabusUrl(doc) {
+        const openOkFlgInpueElement = doc.getElementById('form1:openOkFlg');
+        if (!(openOkFlgInpueElement instanceof HTMLInputElement) || openOkFlgInpueElement.value !== '1') {
+            return;
+        }
+        openOkFlgInpueElement.value = '0';
+        const urlOkFlgInputElement = doc.getElementById('form1:urlOkFlg');
+        if (!(urlOkFlgInputElement instanceof HTMLInputElement) || urlOkFlgInputElement.value === '0') {
+            return;
+        }
+        const koGmnFlgInputElement = doc.getElementById('form1:koGmnFlg');
+        const sylUrlInputElement = doc.getElementById('form1:sylUrl');
+        const genzaiNendoInputElement = doc.getElementById('form1:genzaiNendo');
+        if (!(koGmnFlgInputElement instanceof HTMLInputElement) || !(sylUrlInputElement instanceof HTMLInputElement) || !(genzaiNendoInputElement instanceof HTMLInputElement)) {
+            return;
+        }
+        if (koGmnFlgInputElement.value === '0') {
+            const kamokCdInputElement = doc.getElementById('form1:kamokCd');
+            const jugyoCdInputElement = doc.getElementById('form1:jugyoCd');
+            if (!(kamokCdInputElement instanceof HTMLInputElement) || !(jugyoCdInputElement instanceof HTMLInputElement)) {
+                return;
+            }
+            const url = sylUrlInputElement.value + '&year=' + genzaiNendoInputElement.value + '&kcd=' + kamokCdInputElement.value + '&jcd=' + jugyoCdInputElement.value;
+            return url;
+        }
+        else {
+            const koGmnKamokCdInputElement = doc.getElementById('form1:koGmnKamokCd');
+            const koGmnJugyoCdInputElement = doc.getElementById('form1:koGmnJugyoCd');
+            if (!(koGmnKamokCdInputElement instanceof HTMLInputElement) || !(koGmnJugyoCdInputElement instanceof HTMLInputElement)) {
+                return;
+            }
+            const url = sylUrlInputElement.value + '&year=' + genzaiNendoInputElement.value + '&kcd=' + koGmnKamokCdInputElement.value + '&jcd=' + koGmnJugyoCdInputElement.value;
+            koGmnFlgInputElement.value = '0';
+            return url;
+        }
+    }
+})();
+</pre>
       <p>
         <input type="file" id="json-file-input" accept="application/json">
       </p>
+    </section>
+    <section>
+      <h2>一覧</h2>
+      <div id="courses"></div>
+    </section>
+    <section>
+      <h2>操作の反映</h2>
+      <p>上記と同じ履修登録の授業の選択のページで、コンソールに以下のコードをコピー、ペーストして実行してください。成功すると履修登録のページにこのページの操作を反映することができます。</p>
+      <p>
+        <input type="button" id="write-copy-button-input" value="Copy">
+        <input type="button" id="update-button-input" value="更新">
+      </p>
+      <pre id="pre" class="pre">Error
+</pre>
     </section>
   </main>
   <script type="text/javascript" src="script.js"></script>
