@@ -1,5 +1,6 @@
 'use strict';
-function setupDefault(putCounter) {
+setupDefault();
+function setupDefault() {
     const url = new URL(document.location.href);
     if (url.hostname.toLowerCase() !== 'yu-64b.github.io') {
         return;
@@ -10,6 +11,7 @@ function setupDefault(putCounter) {
     }
     const backgroundDiv = document.createElement('div');
     const mainDiv = document.createElement('div');
+    const putCounter = ['/home', '/home/', '/home/index.html'].includes(url.pathname);
     backgroundDiv.classList.add('background');
     mainDiv.classList.add('main-outer');
     backgroundDiv.appendChild(createHeader(putCounter));
@@ -20,28 +22,20 @@ function setupDefault(putCounter) {
 }
 function createHeader(putCounter) {
     const header = document.createElement('header');
-    const headerStartDiv = document.createElement('div');
-    const iconDiv = document.createElement('div');
     const iconAnchor = document.createElement('a');
     const iconUrl = new URL('https://yu-64b.github.io/home');
     const iconImg = document.createElement('img');
     const iconImgUrl = new URL('https://yu-64b.github.io/home/default/pack_icon.png');
-    const headerEndDiv = document.createElement('div');
     header.classList.add('header', 'header-footer-flex-container');
-    headerStartDiv.classList.add('header-start-item');
-    iconAnchor.classList.add('header-footer-flex-container');
+    iconAnchor.classList.add('header-footer-flex-container', 'icon-item');
     iconAnchor.href = iconUrl.href;
     iconImg.classList.add('img');
     iconImg.src = iconImgUrl.href;
-    headerEndDiv.classList.add('header-end-item');
     iconAnchor.appendChild(iconImg);
-    iconDiv.appendChild(iconAnchor);
-    headerStartDiv.appendChild(iconDiv);
-    header.appendChild(headerStartDiv);
+    header.appendChild(iconAnchor);
     if (putCounter) {
-        headerEndDiv.appendChild(createCounter());
+        header.appendChild(createCounter());
     }
-    header.appendChild(headerEndDiv);
     return header;
 }
 function createCounter() {
@@ -51,7 +45,7 @@ function createCounter() {
     const text = document.createTextNode('表示された回数');
     const imgDiv = document.createElement('div');
     const img = document.createElement('img');
-    const imgUrl = new URL('https://yu-64b.000webhostapp.com');
+    const imgUrl = new URL('https://yu-64b.000webhostapp.com/counter');
     const urlDiv = document.createElement('div');
     const urlAnchor = document.createElement('a');
     const url = new URL('https://www.000webhost.com');

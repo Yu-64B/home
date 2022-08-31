@@ -32,7 +32,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
   gap: 8px;
 }
 .header-footer-link {
@@ -44,14 +43,8 @@
 .header-footer-link:visited {
   color: #cccccc;
 }
-.header-start-item {
-  flex-grow: 0;
-}
-.header-end-item {
-  flex-grow: 1;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+.icon-item {
+  margin-right: auto;
 }
 .counter-item {
   border: 1px solid #666666;

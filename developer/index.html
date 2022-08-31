@@ -9,22 +9,26 @@
 </head>
 <body class="body">
   <main id="main" class="main">
+    <h1>Developer Tools</h1>
     <section>
-      <h1>Developer Tools</h1>
+      <h2>User Name</h2>
       <p>
         <input type="text" onchange="handleChange(this.value)">
+        <span id="username"></span>
       </p>
     </section>
   </main>
   <script type="text/javascript">
     'use strict';
-    setupDefault(false);
-  </script>
-  <script>
-    'use strict';
     function handleChange(text) {
       localStorage.setItem('username', text);
+      showName();
     }
+    function showName() {
+      const p = document.getElementById('username');
+      p.textContent = localStorage.getItem('username');
+    }
+    showName();
   </script>
 </body>
 </html>
