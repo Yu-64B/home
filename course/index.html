@@ -17,15 +17,16 @@
       <pre class="pre">(function () {
     'use strict';
     const getSyllabus = false;
-    const message = getSyllabus ? '全てのシラバスのURLを取得します。これはサーバーに大きな負荷をかける可能性があり、時間がかかります。本当によろしいですか?' : 'ダウンロードを開始します。よろしいですか?';
+    const message = getSyllabus ? '全てのシラバスのURLを取得します。この処理はサーバーに大きな負荷をかける可能性があり、時間がかかります。本当によろしいですか?' : 'ダウンロードを開始します。よろしいですか?';
     const result = confirm(message);
     if (!result) {
         console.log('キャンセルされました。');
+        return;
     }
-    const promises = [];
-    let delayMs = 0;
-    const semesters = getTableGroups(document, promises, null, 0);
-    Promise.all(promises).then(() => {
+    let doc = document;
+    let promise = Promise.resolve();
+    const semesters = getTableGroups(null);
+    promise.then(() => {
         if (!semesters) {
             console.log('Error');
             return;
@@ -41,9 +42,9 @@
     }).catch(error => {
         console.log(error);
     });
-    function getTableGroups(doc, promises, parentDoc, startMs) {
+    function getTableGroups(childDoc) {
         const tableGroups = [];
-        const tableElements = Array.from(doc.getElementsByTagName('table')).filter(tableElement => tableElement.classList.contains('listTable'));
+        const tableElements = Array.from((childDoc ? childDoc : doc).getElementsByTagName('table')).filter(tableElement => tableElement.classList.contains('listTable'));
         let prevTitle = '';
         const tables = [];
         for (const [i, tableElement] of tableElements.entries()) {
@@ -63,7 +64,7 @@
             }
             const rows = [];
             for (const rowElement of tableElement.rows) {
-                const cells = getCells(rowElement, doc, promises, parentDoc, getSyllabus, startMs);
+                const cells = getCells(rowElement, childDoc);
                 if (!cells) {
                     return;
                 }
@@ -83,12 +84,11 @@
         }
         return tableGroups;
     }
-    function getCells(rowElement, doc, promises, parentDoc, getSyllabus, startMs) {
+    function getCells(rowElement, childDoc) {
         const cellElements = Array.from(rowElement.cells);
         const tags = ['th', 'td'];
         const cells = [];
-        cells.length = cellElements.length;
-        for (const [i, cellElement] of cellElements.entries()) {
+        for (const cellElement of cellElements) {
             const tag = tags.find(tag => cellElement.tagName.toLowerCase() === tag);
             if (!tag) {
                 return;
@@ -108,18 +108,21 @@
                     tag: tag,
                     checkbox: checkbox
                 };
-                cells[i] = cell;
+                promise.then(() => {
+                    cells.push(cell);
+                });
             }
             else if (selectImgElement) {
                 const url = getSelectUrlFromImg(selectImgElement);
                 if (!url) {
                     return;
                 }
-                const baseDelayMs = parentDoc ? 200 : 100;
-                const randMs = baseDelayMs + Math.floor(Math.random() * baseDelayMs);
-                delayMs += randMs;
-                const promise = new Promise(resolve => {
-                    return setTimeout(resolve, delayMs - startMs);
+                const baseDelayMs = childDoc || getSyllabus ? 200 : 100;
+                const delayMs = baseDelayMs + Math.floor(Math.random() * baseDelayMs);
+                promise = promise.then(() => {
+                    return new Promise(resolve => {
+                        return setTimeout(resolve, delayMs);
+                    });
                 }).then(() => {
                     return fetch(url);
                 }).then(response => {
@@ -127,42 +130,42 @@
                     return response.text();
                 }).then(text => {
                     const parser = new DOMParser();
-                    const childDoc = parser.parseFromString(text, 'text/html');
-                    const childPromises = [];
-                    const classes = getTableGroups(childDoc, childPromises, doc, delayMs);
+                    const newChildDoc = parser.parseFromString(text, 'text/html');
+                    const classes = getTableGroups(newChildDoc);
                     if (!classes) {
-                        throw undefined;
+                        throw 'Error';
                     }
                     const cell = {
                         tag: tag,
                         table_groups: classes
                     };
-                    cells[i] = cell;
-                    return Promise.all(childPromises);
+                    cells.push(cell);
                 });
-                promises.push(promise);
             }
             else if (deleteImgElement) {
                 const cell = {
                     tag: tag
                 };
-                cells[i] = cell;
+                promise.then(() => {
+                    cells.push(cell);
+                });
             }
             else if (syllabusImgElement && getSyllabus) {
-                const form1FormElement = parentDoc ? parentDoc.getElementById('form1') : doc.getElementById('form1');
+                const form1FormElement = doc.getElementById('form1');
                 if (!(form1FormElement instanceof HTMLFormElement)) {
                     return;
                 }
                 const url = form1FormElement.action;
-                const formData = getSyllabusFormFromImg(syllabusImgElement, doc, parentDoc, form1FormElement);
+                const formData = getSyllabusFormFromImg(syllabusImgElement, childDoc, form1FormElement);
                 if (!formData) {
                     return;
                 }
-                const baseDelayMs = parentDoc ? 200 : 100;
-                const randMs = baseDelayMs + Math.floor(Math.random() * baseDelayMs);
-                delayMs += randMs;
-                const promise = new Promise(resolve => {
-                    return setTimeout(resolve, delayMs - startMs);
+                const baseDelayMs = childDoc || getSyllabus ? 200 : 100;
+                const delayMs = baseDelayMs + Math.floor(Math.random() * baseDelayMs);
+                promise = promise.then(() => {
+                    return new Promise(resolve => {
+                        return setTimeout(resolve, delayMs);
+                    });
                 }).then(() => {
                     return fetch(url, {
                         method: 'POST',
@@ -173,27 +176,28 @@
                     return response.text();
                 }).then(text => {
                     const parser = new DOMParser();
-                    const childDoc = parser.parseFromString(text, 'text/html');
-                    const syllabusUrl = getSyllabusUrl(childDoc);
+                    const newDoc = parser.parseFromString(text, 'text/html');
+                    const syllabusUrl = getSyllabusUrl(newDoc);
                     if (!syllabusUrl) {
-                        throw undefined;
+                        throw 'Error';
                     }
                     const cell = {
                         tag: tag,
                         syllabus: syllabusUrl,
                         text_content: textContent
                     };
-                    cells[i] = cell;
-                    return Promise.all([]);
+                    cells.push(cell);
+                    doc = newDoc;
                 });
-                promises.push(promise);
             }
             else {
                 const cell = {
                     tag: tag,
                     text_content: textContent
                 };
-                cells[i] = cell;
+                promise.then(() => {
+                    cells.push(cell);
+                });
             }
         }
         return cells;
@@ -219,7 +223,7 @@
             return;
         }
         const [nendo, gakki, kbn, row, col, flg] = argsRegExpMatchArray[1].split(',').map(argString => argString.trim() ? Number(argString.trim()) : NaN);
-        if (!nendo || isNaN(nendo) || !gakki || isNaN(gakki) || !kbn || isNaN(kbn) || !row || isNaN(row) || !col || isNaN(col) || !flg || isNaN(flg)) {
+        if (nendo === undefined || isNaN(nendo) || gakki === undefined || isNaN(gakki) || kbn === undefined || isNaN(kbn) || row === undefined || isNaN(row) || col === undefined || isNaN(col) || flg === undefined || isNaN(flg)) {
             return;
         }
         const url = getSelectUrl(nendo, gakki, kbn, row, col, flg);
@@ -229,17 +233,17 @@
         if (flg === 0) {
             const yobi = row;
             const jigen = col;
-            const url = "/up/faces/up/km/pKmb0801A.jsp?sanshoTblFlg=1&nendo=" + nendo + "&gakki=" + gakki + "&kbn=" + kbn + "&yobi=" + yobi + "&jigen=" + jigen;
+            const url = '/up/faces/up/km/pKmb0801A.jsp?sanshoTblFlg=1&nendo=' + nendo + '&gakki=' + gakki + '&kbn=' + kbn + '&yobi=' + yobi + '&jigen=' + jigen;
             return url;
         }
         else {
             const yobi = col;
             const jigen = row;
-            const url = "/up/faces/up/km/pKmb0801A.jsp?sanshoTblFlg=1&nendo=" + nendo + "&gakki=" + gakki + "&kbn=" + kbn + "&yobi=" + yobi + "&jigen=" + jigen;
+            const url = '/up/faces/up/km/pKmb0801A.jsp?sanshoTblFlg=1&nendo=' + nendo + '&gakki=' + gakki + '&kbn=' + kbn + '&yobi=' + yobi + '&jigen=' + jigen;
             return url;
         }
     }
-    function getSyllabusFormFromImg(syllabusImgElement, doc, parentDoc, form1FormElement) {
+    function getSyllabusFormFromImg(syllabusImgElement, childDoc, form1FormElement) {
         if (!syllabusImgElement.parentElement) {
             return;
         }
@@ -251,29 +255,34 @@
         if (!argsRegExpMatchArray || !argsRegExpMatchArray[1]) {
             return;
         }
-        const [jugyoCd] = argsRegExpMatchArray[1].split(',').map(argString => argString.trim());
-        if (!jugyoCd) {
+        const [jugyoCdRegExpMatchArray] = argsRegExpMatchArray[1].split(',').map(argString => argString.trim().match(/'(.*)'/));
+        if (!jugyoCdRegExpMatchArray || !jugyoCdRegExpMatchArray[1]) {
             return;
         }
-        const formData = parentDoc ? getChildSyllabusForm(doc, parentDoc, jugyoCd, form1FormElement) : getSyllabusForm(doc, jugyoCd, form1FormElement);
+        const jugyoCd = jugyoCdRegExpMatchArray[1];
+        const formData = childDoc ? getChildSyllabusForm(childDoc, jugyoCd, form1FormElement) : getSyllabusForm(jugyoCd, form1FormElement);
         return formData;
     }
-    function getChildSyllabusForm(doc, parentDoc, jugyoCd, form1FormElement) {
-        const urlOkFlgInputElement = doc.getElementById('form1:urlOkFlg');
-        const koGmnJugyoCdParentInputElement = parentDoc.getElementById('form1:koGmnJugyoCd');
-        const koGmnFlgParentInputElement = parentDoc.getElementById('form1:koGmnFlg');
-        const urlOkFlgParentInputElement = parentDoc.getElementById('form1:urlOkFlg');
-        if (!(urlOkFlgInputElement instanceof HTMLInputElement) || urlOkFlgInputElement.value !== '1' || !(koGmnJugyoCdParentInputElement instanceof HTMLInputElement) || !(koGmnFlgParentInputElement instanceof HTMLInputElement) || !(urlOkFlgParentInputElement instanceof HTMLInputElement) || !(form1FormElement instanceof HTMLFormElement)) {
+    function getChildSyllabusForm(childDoc, jugyoCd, form1FormElement) {
+        const urlOkFlgInputElement = childDoc.getElementById('form1:urlOkFlg');
+        const koGmnJugyoCdParentInputElement = doc.getElementById('form1:koGmnJugyoCd');
+        const koGmnFlgParentInputElement = doc.getElementById('form1:koGmnFlg');
+        const urlOkFlgParentInputElement = doc.getElementById('form1:urlOkFlg');
+        const getKamokBtnParentInputElement = doc.getElementById('form1:getKamokBtn');
+        if (!(urlOkFlgInputElement instanceof HTMLInputElement) || urlOkFlgInputElement.value !== '1' || !(koGmnJugyoCdParentInputElement instanceof HTMLInputElement) || !(koGmnFlgParentInputElement instanceof HTMLInputElement) || !(urlOkFlgParentInputElement instanceof HTMLInputElement) || !(form1FormElement instanceof HTMLFormElement) || !(getKamokBtnParentInputElement instanceof HTMLInputElement)) {
             return;
         }
         koGmnJugyoCdParentInputElement.value = jugyoCd;
         koGmnFlgParentInputElement.value = '1';
         urlOkFlgParentInputElement.value = urlOkFlgInputElement.value;
-        return new FormData(form1FormElement);
+        const formData = new FormData(form1FormElement);
+        formData.append(getKamokBtnParentInputElement.name, getKamokBtnParentInputElement.value);
+        return formData;
     }
-    function getSyllabusForm(doc, jugyoCd, form1FormElement) {
+    function getSyllabusForm(jugyoCd, form1FormElement) {
         const koGmnFlgInputElement = doc.getElementById('form1:koGmnFlg');
-        if (!(koGmnFlgInputElement instanceof HTMLInputElement)) {
+        const getKamokBtnInputElement = doc.getElementById('form1:getKamokBtn');
+        if (!(koGmnFlgInputElement instanceof HTMLInputElement) || !(getKamokBtnInputElement instanceof HTMLInputElement)) {
             return;
         }
         if (koGmnFlgInputElement.value === '0') {
@@ -291,27 +300,24 @@
             koGmnJugyoCdInputElement.value = jugyoCd;
             koGmnFlgInputElement.value = '0';
         }
-        return new FormData(form1FormElement);
+        const formData = new FormData(form1FormElement);
+        formData.append(getKamokBtnInputElement.name, getKamokBtnInputElement.value);
+        return formData;
     }
-    function getSyllabusUrl(doc) {
-        const openOkFlgInpueElement = doc.getElementById('form1:openOkFlg');
-        if (!(openOkFlgInpueElement instanceof HTMLInputElement) || openOkFlgInpueElement.value !== '1') {
-            return;
-        }
-        openOkFlgInpueElement.value = '0';
-        const urlOkFlgInputElement = doc.getElementById('form1:urlOkFlg');
+    function getSyllabusUrl(childDoc) {
+        const urlOkFlgInputElement = childDoc.getElementById('form1:urlOkFlg');
         if (!(urlOkFlgInputElement instanceof HTMLInputElement) || urlOkFlgInputElement.value === '0') {
             return;
         }
-        const koGmnFlgInputElement = doc.getElementById('form1:koGmnFlg');
-        const sylUrlInputElement = doc.getElementById('form1:sylUrl');
-        const genzaiNendoInputElement = doc.getElementById('form1:genzaiNendo');
+        const koGmnFlgInputElement = childDoc.getElementById('form1:koGmnFlg');
+        const sylUrlInputElement = childDoc.getElementById('form1:sylUrl');
+        const genzaiNendoInputElement = childDoc.getElementById('form1:genzaiNendo');
         if (!(koGmnFlgInputElement instanceof HTMLInputElement) || !(sylUrlInputElement instanceof HTMLInputElement) || !(genzaiNendoInputElement instanceof HTMLInputElement)) {
             return;
         }
         if (koGmnFlgInputElement.value === '0') {
-            const kamokCdInputElement = doc.getElementById('form1:kamokCd');
-            const jugyoCdInputElement = doc.getElementById('form1:jugyoCd');
+            const kamokCdInputElement = childDoc.getElementById('form1:kamokCd');
+            const jugyoCdInputElement = childDoc.getElementById('form1:jugyoCd');
             if (!(kamokCdInputElement instanceof HTMLInputElement) || !(jugyoCdInputElement instanceof HTMLInputElement)) {
                 return;
             }
@@ -319,8 +325,8 @@
             return url;
         }
         else {
-            const koGmnKamokCdInputElement = doc.getElementById('form1:koGmnKamokCd');
-            const koGmnJugyoCdInputElement = doc.getElementById('form1:koGmnJugyoCd');
+            const koGmnKamokCdInputElement = childDoc.getElementById('form1:koGmnKamokCd');
+            const koGmnJugyoCdInputElement = childDoc.getElementById('form1:koGmnJugyoCd');
             if (!(koGmnKamokCdInputElement instanceof HTMLInputElement) || !(koGmnJugyoCdInputElement instanceof HTMLInputElement)) {
                 return;
             }

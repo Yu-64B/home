@@ -32,6 +32,7 @@ function handleFile(event) {
         }
         readJson(event.target.result);
         setCheckboxTogleEvent();
+        updatePre();
     };
     reader.readAsText(file);
 }
@@ -50,6 +51,7 @@ function readJson(json) {
         if (!detailsElement) {
             return;
         }
+        detailsElement.classList.add('details');
         divElement.appendChild(detailsElement);
     }
     outerDivElement.appendChild(divElement);
@@ -80,6 +82,7 @@ function readTableGroup(tableGroup) {
         }
         const tableElement = document.createElement('table');
         const tbodyElement = document.createElement('tbody');
+        tableElement.classList.add('table');
         for (const cells of rows) {
             if (!isUnknownArray(cells)) {
                 return;
@@ -121,14 +124,19 @@ function readTableGroup(tableGroup) {
                     const selectDetailsElement = document.createElement('details');
                     const selectSummaryElement = document.createElement('summary');
                     const selectTextNode = document.createTextNode('選択');
+                    const selectDivElemet = document.createElement('div');
                     selectSummaryElement.appendChild(selectTextNode);
                     selectDetailsElement.appendChild(selectSummaryElement);
+                    selectDetailsElement.classList.add('select-details');
+                    selectDivElemet.classList.add('select-div');
                     for (const clas of classes) {
                         const innerDetailsElement = readTableGroup(clas);
                         if (!innerDetailsElement) {
                             return;
                         }
-                        selectDetailsElement.appendChild(innerDetailsElement);
+                        innerDetailsElement.classList.add('inner-details');
+                        selectDivElemet.appendChild(innerDetailsElement);
+                        selectDetailsElement.appendChild(selectDivElemet);
                     }
                     cellElement.appendChild(selectDetailsElement);
                 }
@@ -138,7 +146,8 @@ function readTableGroup(tableGroup) {
                         return;
                     }
                     const syllabusAElement = document.createElement('a');
-                    const syllabusTextNode = document.createTextNode(syllabusUrl);
+                    const syllabusTextNode = document.createTextNode('シラバス参照');
+                    syllabusAElement.href = syllabusUrl;
                     syllabusAElement.appendChild(syllabusTextNode);
                     cellElement.appendChild(syllabusAElement);
                 }
@@ -202,14 +211,14 @@ function updatePre() {
     const errorValues = [];
     for (const checkedValue of checkedValuesSet) {
         if (checkedValue.includes('`') || checkedValue.includes('$')) {
-            const errorTextNode = document.createElement('Error');
+            const errorTextNode = document.createTextNode('Error');
             preElement.appendChild(errorTextNode);
             return;
         }
     }
     for (const uncheckedValue of uncheckedValuesSet) {
         if (uncheckedValue.includes('`') || uncheckedValue.includes('$')) {
-            const errorTextNode = document.createElement('Error');
+            const errorTextNode = document.createTextNode('Error');
             preElement.appendChild(errorTextNode);
             return;
         }

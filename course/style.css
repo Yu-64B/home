@@ -3,3 +3,45 @@
   overflow: auto;
   max-height: 350px;
 }
+.details {
+  border: 1px solid #cccccc;
+  padding: 2px 6px;
+}
+.select-details {
+  border: 1px solid #cccccc;
+  padding: 2px 6px;
+}
+.select-details[open] > summary:before {
+  content: "";
+  display: block;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  background-color: transparent;
+}
+.select-div {
+  position: absolute;
+  z-index: 2;
+}
+.inner-details {
+  position: relative;
+  left: -6px;
+  margin-right: 2px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  box-shadow: 0 0 4px #000000;
+  background-color: #ffffff;
+}
+.table {
+  border-collapse: collapse;
+  margin-bottom: 6px;
+}
+.table th, .table td {
+  border: 1px solid;
+}
+.table td {
+  height: 24px;
+}
