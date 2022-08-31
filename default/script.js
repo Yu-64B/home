@@ -23,7 +23,7 @@ function setupDefault() {
 function createHeader(putCounter) {
     const header = document.createElement('header');
     const iconAnchor = document.createElement('a');
-    const iconUrl = new URL('https://yu-64b.github.io/home');
+    const iconUrl = new URL('https://yu-64b.github.io/home/');
     const iconImg = document.createElement('img');
     const iconImgUrl = new URL('https://yu-64b.github.io/home/default/pack_icon.png');
     header.classList.add('header', 'header-footer-flex-container');
@@ -45,10 +45,10 @@ function createCounter() {
     const text = document.createTextNode('表示された回数');
     const imgDiv = document.createElement('div');
     const img = document.createElement('img');
-    const imgUrl = new URL('https://yu-64b.000webhostapp.com/counter');
+    const imgUrl = new URL('https://yu-64b.000webhostapp.com/counter/');
     const urlDiv = document.createElement('div');
     const urlAnchor = document.createElement('a');
-    const url = new URL('https://www.000webhost.com');
+    const url = new URL('https://www.000webhost.com/');
     const urlText = document.createTextNode('Powered by 000webhost');
     counterDiv.classList.add('counter-item');
     counterInnerDiv.classList.add('header-footer-flex-container');
@@ -82,7 +82,7 @@ function createFooter() {
     const footer = document.createElement('footer');
     const urlDiv = document.createElement('div');
     const urlAnchor = document.createElement('a');
-    const url = new URL('https://docs.github.com/en/pages');
+    const url = new URL('https://docs.github.com/en/pages/');
     const urlText = document.createTextNode('Powered by GitHub Pages');
     footer.classList.add('footer', 'header-footer-flex-container');
     urlAnchor.classList.add('header-footer-link');
