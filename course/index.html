@@ -25,13 +25,8 @@
         return;
     }
     let doc = document;
-    let promise = Promise.resolve();
-    const semesters = getTableGroups(null);
-    promise.then(() => {
-        if (!semesters) {
-            console.log('Error');
-            return;
-        }
+    let promise = getTableGroups(null);
+    promise.then(semesters => {
         const json = JSON.stringify(semesters);
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -48,12 +43,13 @@
         const tableElements = Array.from((childDoc ? childDoc : doc).getElementsByTagName('table')).filter(tableElement => tableElement.classList.contains('listTable'));
         let prevTitle = '';
         const tables = [];
+        let promise = Promise.resolve();
         for (const [i, tableElement] of tableElements.entries()) {
             const newTitle = getTitle(tableElement);
             if (newTitle) {
                 if (i !== 0) {
                     if (!prevTitle) {
-                        return;
+                        throw 'Error';
                     }
                     const tableGroup = {
                         title: prevTitle,
@@ -65,16 +61,16 @@
             }
             const rows = [];
             for (const rowElement of tableElement.rows) {
-                const cells = getCells(rowElement, childDoc);
-                if (!cells) {
-                    return;
-                }
-                rows.push(cells);
+                promise = promise.then(() => {
+                    return getCells(rowElement, childDoc);
+                }).then(cells => {
+                    rows.push(cells);
+                });
             }
             tables.push(rows);
             if (i === tableElements.length - 1) {
                 if (!prevTitle) {
-                    return;
+                    throw 'Error';
                 }
                 const tableGroup = {
                     title: prevTitle,
@@ -83,16 +79,19 @@
                 tableGroups.push(tableGroup);
             }
         }
-        return tableGroups;
+        return promise.then(() => {
+            return tableGroups;
+        });
     }
     function getCells(rowElement, childDoc) {
         const cellElements = Array.from(rowElement.cells);
         const tags = ['th', 'td'];
         const cells = [];
+        let promise = Promise.resolve();
         for (const cellElement of cellElements) {
             const tag = tags.find(tag => cellElement.tagName.toLowerCase() === tag);
             if (!tag) {
-                return;
+                throw 'Error';
             }
             const checkboxElement = Array.from(cellElement.getElementsByTagName('input')).find(inputElement => inputElement.type === 'checkbox');
             const selectImgElement = Array.from(cellElement.getElementsByTagName('img')).find(imgElement => imgElement.alt === '選択');
@@ -109,14 +108,14 @@
                     tag: tag,
                     checkbox: checkbox
                 };
-                promise.then(() => {
+                promise = promise.then(() => {
                     cells.push(cell);
                 });
             }
             else if (selectImgElement) {
                 const url = getSelectUrlFromImg(selectImgElement);
                 if (!url) {
-                    return;
+                    throw 'Error';
                 }
                 const baseDelayMs = childDoc || getSyllabus ? 200 : 100;
                 const delayMs = baseDelayMs + Math.floor(Math.random() * baseDelayMs);
@@ -132,10 +131,8 @@
                 }).then(text => {
                     const parser = new DOMParser();
                     const newChildDoc = parser.parseFromString(text, 'text/html');
-                    const classes = getTableGroups(newChildDoc);
-                    if (!classes) {
-                        throw 'Error';
-                    }
+                    return getTableGroups(newChildDoc);
+                }).then(classes => {
                     const cell = {
                         tag: tag,
                         table_groups: classes
@@ -147,19 +144,19 @@
                 const cell = {
                     tag: tag
                 };
-                promise.then(() => {
+                promise = promise.then(() => {
                     cells.push(cell);
                 });
             }
             else if (syllabusImgElement && getSyllabus) {
                 const form1FormElement = doc.getElementById('form1');
                 if (!(form1FormElement instanceof HTMLFormElement)) {
-                    return;
+                    throw 'Error';
                 }
                 const url = form1FormElement.action;
                 const formData = getSyllabusFormFromImg(syllabusImgElement, childDoc, form1FormElement);
                 if (!formData) {
-                    return;
+                    throw 'Error';
                 }
                 const baseDelayMs = childDoc || getSyllabus ? 200 : 100;
                 const delayMs = baseDelayMs + Math.floor(Math.random() * baseDelayMs);
@@ -196,12 +193,14 @@
                     tag: tag,
                     text_content: textContent
                 };
-                promise.then(() => {
+                promise = promise.then(() => {
                     cells.push(cell);
                 });
             }
         }
-        return cells;
+        return promise.then(() => {
+            return cells;
+        });
     }
     function getTitle(tableElement) {
         const closestRowElement = tableElement.closest('tr');

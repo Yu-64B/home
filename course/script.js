@@ -148,6 +148,8 @@ function readTableGroup(tableGroup) {
                     const syllabusAElement = document.createElement('a');
                     const syllabusTextNode = document.createTextNode('シラバス参照');
                     syllabusAElement.href = syllabusUrl;
+                    syllabusAElement.target = '_blank';
+                    syllabusAElement.rel = 'noopener noreferrer';
                     syllabusAElement.appendChild(syllabusTextNode);
                     cellElement.appendChild(syllabusAElement);
                 }
